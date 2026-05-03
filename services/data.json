@@ -1,0 +1,99 @@
+{
+    "fields": [
+        {
+            "id": "1",
+            "name": "Sân bóng đá Ánh Dương",
+            "sport": "Bóng đá",
+            "price": 300000,
+            "location": "Quận 1, TP.HCM",
+            "address": "123 Đường ABC",
+            "available": true,
+            "rating": 4.8,
+            "image": null,
+            "amenities": [
+                "wifi",
+                "parking",
+                "locker",
+                "shower"
+            ]
+        },
+        {
+            "id": "2",
+            "name": "CLB Cầu lông Nguyễn Du",
+            "sport": "Cầu lông",
+            "price": 150000,
+            "location": "Quận 3, TP.HCM",
+            "address": "456 Đường XYZ",
+            "available": true,
+            "rating": 4.6,
+            "image": null,
+            "amenities": [
+                "parking",
+                "locker"
+            ]
+        },
+        {
+            "id": "3",
+            "name": "Sân bóng rổ Trần Hưng Đạo",
+            "sport": "Bóng rổ",
+            "price": 200000,
+            "location": "Quận 5, TP.HCM",
+            "address": "789 Đường DEF",
+            "available": false,
+            "rating": 4.9,
+            "image": null,
+            "amenities": [
+                "wifi",
+                "parking",
+                "air_conditioner"
+            ]
+        },
+        {
+            "id": "4",
+            "name": "Sân Tennis Phú Thọ",
+            "sport": "Tennis",
+            "price": 400000,
+            "location": "Quận 11, TP.HCM",
+            "address": "321 Đường GHI",
+            "available": true,
+            "rating": 4.7,
+            "image": null,
+            "amenities": [
+                "parking",
+                "shower",
+                "cafe"
+            ]
+        }
+    ],
+    "bookings": [
+        {
+            "id": "booking1",
+            "userId": "user1",
+            "fieldId": "3",
+            "fieldName": "Sân bóng rổ Trần Hưng Đạo",
+            "date": "2026-05-05",
+            "hours": 2,
+            "totalPrice": 400000,
+            "status": "confirmed",
+            "createdAt": "2026-05-01T10:00:00Z"
+        }
+    ],
+    "users": [
+        {
+            "id": "user1",
+            "email": "user@example.com",
+            "password": "123456",
+            "fullName": "Nguyễn Văn A",
+            "phone": "0901234567",
+            "role": "user"
+        },
+        {
+            "id": "admin1",
+            "email": "admin@example.com",
+            "password": "admin123",
+            "fullName": "Quản Trị Viên",
+            "phone": "0987654321",
+            "role": "admin"
+        }
+    ]
+}

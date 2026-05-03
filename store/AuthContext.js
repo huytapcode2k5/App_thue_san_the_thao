@@ -1,12 +1,12 @@
-// store/AuthContext.js
+// store/AuthContext.js (SỬA LẠI)
 import React, { createContext, useState, useEffect } from 'react';
-import { auth } from '../services/firebase';
 import {
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    signOut,
-    onAuthStateChanged
-} from 'firebase/auth';
+    getUsers,
+    createUser,
+    saveCurrentUser,
+    getCurrentUser,
+    clearCurrentUser
+} from '../services/jsonDataService';
 
 export const AuthContext = createContext();
 
@@ -15,39 +15,56 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setUser(user);
-            setLoading(false);
-        });
-        return unsubscribe;
+        // Kiểm tra user đã đăng nhập chưa
+        checkUserLoggedIn();
     }, []);
+
+    const checkUserLoggedIn = async () => {
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
+        setLoading(false);
+    };
 
     const login = async (email, password) => {
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            return { success: true, user: userCredential.user };
+            const users = await getUsers();
+            const foundUser = users.find(u => u.email === email && u.password === password);
+
+            if (foundUser) {
+                // Không lưu password vào state
+                const { password, ...userWithoutPassword } = foundUser;
+                setUser(userWithoutPassword);
+                await saveCurrentUser(userWithoutPassword);
+                return { success: true, user: userWithoutPassword };
+            } else {
+                return { success: false, error: 'Email hoặc mật khẩu không đúng' };
+            }
         } catch (error) {
             return { success: false, error: error.message };
         }
     };
 
-    const register = async (email, password, fullName) => {
-        try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            // TODO: Lưu thêm thông tin user vào Firestore
-            return { success: true, user: userCredential.user };
-        } catch (error) {
-            return { success: false, error: error.message };
+    const register = async (email, password, fullName, phone) => {
+        const result = await createUser({
+            email,
+            password,
+            fullName,
+            phone: phone || '',
+            role: 'user'
+        });
+
+        if (result.success) {
+            const { password, ...userWithoutPassword } = result.user;
+            return { success: true, user: userWithoutPassword };
+        } else {
+            return { success: false, error: result.error };
         }
     };
 
     const logout = async () => {
-        try {
-            await signOut(auth);
-            return { success: true };
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
+        await clearCurrentUser();
+        setUser(null);
+        return { success: true };
     };
 
     return (
