@@ -49,7 +49,6 @@ export default function LoginScreen({ navigation }) {
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
             >
-                <Text style={styles.headerLabel}>Đăng nhập</Text>
 
                 {/* Logo */}
                 <View style={styles.logoBox}>

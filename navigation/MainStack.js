@@ -1,113 +1,100 @@
-// // navigation/MainStack.js
-// import React from 'react';
-// import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-// import { createNativeStackNavigator } from '@react-navigation/native-stack';
-// import { View, Text } from 'react-native';
+// navigation/MainStack.js
+import React from 'react';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { View, Text } from 'react-native';
 
-// import HomeScreen from '../screens/HomeScreen';
-// import FieldListScreen from '../screens/FieldScreen';
+import HomeScreen from '../screens/HomeScreen';
+import FieldScreen from '../screens/FieldScreen';
+// import HistoryScreen from '../screens/HistoryScreen';
 // import BookingScreen from '../screens/BookingScreen';
-// import ProfileScreen from '../screens/ProfileScreen';
+// import CartScreen from '../screens/CartScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
-// const Tab = createBottomTabNavigator();
-// const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
-// const PRIMARY = '#4CAF50'; // ✅ dùng thẳng, tránh COLORS undefined
+const PRIMARY = '#4CAF50';
 
-// // ── HistoryScreen & NotificationScreen định nghĩa TRƯỚC khi dùng ──
-// function HistoryScreen() {
-//     return (
-//         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-//             <Text>Lịch sử đặt sân</Text>
-//         </View>
-//     );
-// }
+// Placeholder History
+function HistoryScreen() {
+    return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0faf0' }}>
+            <Text style={{ fontSize: 48, marginBottom: 12 }}>🕓</Text>
+            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#2E7D32', marginBottom: 8 }}>Lịch sử</Text>
+            <Text style={{ fontSize: 14, color: '#888' }}>Màn hình đang được phát triển</Text>
+        </View>
+    );
+}
 
-// function NotificationScreen() {
-//     return (
-//         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-//             <Text>Thông báo</Text>
-//         </View>
-//     );
-// }
+function HomeStack() {
+    return (
+        <Stack.Navigator>
+            <Stack.Screen name="HomeScreen" component={HomeScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Field" component={FieldScreen} options={{ title: 'Danh sách sân' }} />
+        </Stack.Navigator>
+    );
+}
 
-// // ── HomeStack ─────────────────────────────────────────────────────
-// function HomeStack() {
-//     return (
-//         <Stack.Navigator>
-//             <Stack.Screen
-//                 name="HomeScreen"
-//                 component={HomeScreen}
-//                 options={{ headerShown: false }}
-//             />
-//             <Stack.Screen
-//                 name="FieldList"
-//                 component={FieldListScreen}
-//                 options={{ title: 'Danh sách sân' }}
-//             />
-//             <Stack.Screen
-//                 name="Booking"
-//                 component={BookingScreen}
-//                 options={{ title: 'Đặt sân' }}
-//             />
-//         </Stack.Navigator>
-//     );
-// }
+function BookingStack() {
+    return (
+        <Stack.Navigator>
+            <Stack.Screen name="BookingScreen" component={BookingScreen} options={{ headerShown: false }} />
+        </Stack.Navigator>
+    );
+}
 
-// // ── ProfileStack ──────────────────────────────────────────────────
-// function ProfileStack() {
-//     return (
-//         <Stack.Navigator>
-//             <Stack.Screen
-//                 name="ProfileScreen"
-//                 component={ProfileScreen}
-//                 options={{ title: 'Cá nhân' }}
-//             />
-//         </Stack.Navigator>
-//     );
-// }
+function CartStack() {
+    return (
+        <Stack.Navigator>
+            <Stack.Screen name="CartScreen" component={CartScreen} options={{ headerShown: false }} />
+        </Stack.Navigator>
+    );
+}
 
-// // ── Icon helper ───────────────────────────────────────────────────
-// const TAB_ICONS = {
-//     Home: '🏠',
-//     History: '📅',
-//     Notification: '🔔',
-//     Profile: '👤',
-// };
+function ProfileStack() {
+    return (
+        <Stack.Navigator>
+            <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: false }} />
+        </Stack.Navigator>
+    );
+}
 
-// // ── MainStack ─────────────────────────────────────────────────────
-// export default function MainStack() {
-//     return (
-//         <Tab.Navigator
-//             screenOptions={({ route }) => ({
-//                 headerShown: false,
-//                 tabBarActiveTintColor: PRIMARY,
-//                 tabBarInactiveTintColor: 'gray',
-//                 tabBarStyle: {
-//                     backgroundColor: '#fff',
-//                     height: 60,
-//                     paddingBottom: 8,
-//                     paddingTop: 8,
-//                     borderTopWidth: 1,
-//                     borderTopColor: '#e0e0e0',
-//                     elevation: 10,
-//                     shadowColor: '#000',
-//                     shadowOffset: { width: 0, height: -2 },
-//                     shadowOpacity: 0.1,
-//                     shadowRadius: 4,
-//                 },
-//                 tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
-//                 tabBarIcon: ({ color }) => (
-//                     <Text style={{ fontSize: 22 }}>
-//                         {TAB_ICONS[route.name] ?? '❓'}
-//                     </Text>
-//                 ),
-//             })}
-//         >
-//             <Tab.Screen name="Home" component={HomeStack} options={{ title: 'Trang chủ' }} />
-//             <Tab.Screen name="History" component={HistoryScreen} options={{ title: 'Lịch sử' }} />
-//             <Tab.Screen name="Notification" component={NotificationScreen} options={{ title: 'Thông báo' }} />
-//             <Tab.Screen name="Profile" component={ProfileStack} options={{ title: 'Cá nhân' }} />
-//         </Tab.Navigator>
-//     );
-// }
+const TAB_ICONS = { Home: '🏠', Booking: '📅', Cart: '🛒', History: '🕓', Profile: '👤' };
+const TAB_LABELS = { Home: 'Trang chủ', Booking: 'Đặt sân', Cart: 'Giỏ hàng', History: 'Lịch sử', Profile: 'Cá nhân' };
+
+export default function MainStack() {
+    return (
+        <Tab.Navigator
+            screenOptions={({ route }) => ({
+                headerShown: false,
+                tabBarActiveTintColor: PRIMARY,
+                tabBarInactiveTintColor: 'gray',
+                tabBarStyle: {
+                    backgroundColor: '#fff',
+                    height: 62,
+                    paddingBottom: 8,
+                    paddingTop: 6,
+                    borderTopWidth: 1,
+                    borderTopColor: '#e0e0e0',
+                    elevation: 10,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: -2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                },
+                tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
+                tabBarLabel: TAB_LABELS[route.name] ?? route.name,
+                tabBarIcon: () => (
+                    <Text style={{ fontSize: 20 }}>{TAB_ICONS[route.name] ?? '❓'}</Text>
+                ),
+            })}
+        >
+            <Tab.Screen name="Home" component={HomeStack} />
+            <Tab.Screen name="Booking" component={BookingStack} />
+            <Tab.Screen name="Cart" component={CartStack} />
+            <Tab.Screen name="History" component={HistoryScreen} />
+            <Tab.Screen name="Profile" component={ProfileStack} />
+        </Tab.Navigator>
+    );
+}
