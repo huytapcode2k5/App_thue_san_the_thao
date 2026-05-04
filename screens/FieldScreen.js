@@ -25,7 +25,7 @@ const SPORT_FILTERS = ['Tất cả', 'Bóng đá', 'Cầu lông', 'Tennis', 'Bó
 export default function FieldListScreen({ route, navigation }) {
     const [fields, setFields] = useState([]);
     const [filtered, setFiltered] = useState([]);
-    const [selectedSport, setSelectedSport] = useState(route.params?.sport || 'Tất cả');
+    const [selectedSport, setSelectedSport] = useState(route?.params?.sport || 'Tất cả');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {

@@ -6,10 +6,11 @@ import { View, Text } from 'react-native';
 
 import HomeScreen from '../screens/HomeScreen';
 import FieldScreen from '../screens/FieldScreen';
-// import HistoryScreen from '../screens/HistoryScreen';
-// import BookingScreen from '../screens/BookingScreen';
-// import CartScreen from '../screens/CartScreen';
+import BookingScreen from '../screens/BookingScreen';
+import CartScreen from '../screens/CartScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import ShopScreen from '../screens/ShopScreen';
+import ProductDetailScreen from '../screens/ProductDetailScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -60,8 +61,49 @@ function ProfileStack() {
     );
 }
 
-const TAB_ICONS = { Home: '🏠', Booking: '📅', Cart: '🛒', History: '🕓', Profile: '👤' };
-const TAB_LABELS = { Home: 'Trang chủ', Booking: 'Đặt sân', Cart: 'Giỏ hàng', History: 'Lịch sử', Profile: 'Cá nhân' };
+// ── Shop Stack: Shop → ProductDetail ────────────────────────────
+function ShopStack() {
+    return (
+        <Stack.Navigator>
+            <Stack.Screen
+                name="ShopScreen"
+                component={ShopScreen}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="ProductDetail"
+                component={ProductDetailScreen}
+                options={{
+                    headerShown: true,
+                    title: 'Chi tiết sản phẩm',
+                    headerStyle: { backgroundColor: '#2E7D32' },
+                    headerTintColor: '#fff',
+                    headerTitleStyle: { fontWeight: '700' },
+                    // Dùng header tùy chỉnh nếu muốn ẩn:
+                    // headerShown: false,
+                }}
+            />
+        </Stack.Navigator>
+    );
+}
+
+const TAB_ICONS = {
+    Home: '🏠',
+    Booking: '📅',
+    Cart: '🛒',
+    History: '🕓',
+    Shop: '🏪',
+    Profile: '👤',
+};
+
+const TAB_LABELS = {
+    Home: 'Trang chủ',
+    Booking: 'Đặt sân',
+    Cart: 'Giỏ hàng',
+    History: 'Lịch sử',
+    Shop: 'Cửa hàng',
+    Profile: 'Cá nhân',
+};
 
 export default function MainStack() {
     return (
@@ -92,6 +134,7 @@ export default function MainStack() {
         >
             <Tab.Screen name="Home" component={HomeStack} />
             <Tab.Screen name="Booking" component={BookingStack} />
+            <Tab.Screen name="Shop" component={ShopStack} />
             <Tab.Screen name="Cart" component={CartStack} />
             <Tab.Screen name="History" component={HistoryScreen} />
             <Tab.Screen name="Profile" component={ProfileStack} />

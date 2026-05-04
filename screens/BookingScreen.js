@@ -41,7 +41,15 @@ const getNextDays = () => {
 };
 
 export default function BookingScreen({ route, navigation }) {
-    const { field } = route.params;
+    const { field } = route.params || {};
+
+    if (!field) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text>Vui lòng chọn sân từ danh sách</Text>
+            </View>
+        );
+    }
     const days = getNextDays();
 
     const [selectedDay, setSelectedDay] = useState(days[0].date);
@@ -104,9 +112,9 @@ export default function BookingScreen({ route, navigation }) {
                 <View style={styles.fieldImagePlaceholder}>
                     <Text style={{ fontSize: 52 }}>
                         {field.sport === 'Bóng đá' ? '⚽' :
-                         field.sport === 'Cầu lông' ? '🏸' :
-                         field.sport === 'Tennis' ? '🎾' :
-                         field.sport === 'Bóng rổ' ? '🏀' : '🏟️'}
+                            field.sport === 'Cầu lông' ? '🏸' :
+                                field.sport === 'Tennis' ? '🎾' :
+                                    field.sport === 'Bóng rổ' ? '🏀' : '🏟️'}
                     </Text>
                 </View>
                 <View style={styles.fieldInfo}>
