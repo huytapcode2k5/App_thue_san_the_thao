@@ -1,8 +1,7 @@
 // services/jsonDataService.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import initialData from './data.json'; // File JSON mẫu bên dưới
+import initialData from './data.json';
 
-// Keys để lưu trữ
 const STORAGE_KEYS = {
     FIELDS: '@sport_fields',
     BOOKINGS: '@sport_bookings',
@@ -10,16 +9,54 @@ const STORAGE_KEYS = {
     CURRENT_USER: '@sport_current_user'
 };
 
-// Khởi tạo dữ liệu mẫu lần đầu
+// ── Helper: ép kiểu an toàn ──────────────────────────────────────
+// Tránh lỗi "String cannot be cast to Boolean/Integer"
+const toStr = (v) => String(v);                          // id luôn là string
+const toBool = (v) => v === true || v === 'true';         // available luôn boolean
+const toNum = (v) => Number(v) || 0;                     // price, rating luôn number
+
+// Chuẩn hoá 1 field object từ JSON
+const normalizeField = (f) => ({
+    ...f,
+    id: toStr(f.id),
+    price: toNum(f.price),
+    rating: toNum(f.rating),
+    available: toBool(f.available),   // ✅ fix "String cannot be cast to Boolean"
+});
+
+// Chuẩn hoá 1 user object
+const normalizeUser = (u) => ({
+    ...u,
+    id: toStr(u.id),
+});
+
+// Chuẩn hoá 1 booking object
+const normalizeBooking = (b) => ({
+    ...b,
+    id: toStr(b.id),
+    fieldId: toStr(b.fieldId),     // ✅ đảm bảo luôn là string khi so sánh
+    userId: toStr(b.userId),
+    totalPrice: toNum(b.totalPrice),
+    hours: toNum(b.hours),
+});
+
+// ── Khởi tạo data lần đầu ────────────────────────────────────────
 export const initializeData = async () => {
     try {
-        // Kiểm tra xem đã có data chưa
         const fields = await AsyncStorage.getItem(STORAGE_KEYS.FIELDS);
         if (!fields) {
-            // Chưa có thì lưu data mẫu từ file JSON
-            await AsyncStorage.setItem(STORAGE_KEYS.FIELDS, JSON.stringify(initialData.fields));
-            await AsyncStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(initialData.bookings));
-            await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(initialData.users));
+            await AsyncStorage.setItem(
+                STORAGE_KEYS.FIELDS,
+                JSON.stringify(initialData.fields.map(normalizeField))
+            );
+            await AsyncStorage.setItem(
+                STORAGE_KEYS.BOOKINGS,
+                JSON.stringify(initialData.bookings.map(normalizeBooking))
+            );
+            await AsyncStorage.setItem(
+                STORAGE_KEYS.USERS,
+                JSON.stringify(initialData.users.map(normalizeUser))
+            );
         }
         return true;
     } catch (error) {
@@ -28,11 +65,12 @@ export const initializeData = async () => {
     }
 };
 
-// ========== FIELD SERVICES ==========
+// ── FIELD SERVICES ───────────────────────────────────────────────
 export const getFields = async () => {
     try {
         const data = await AsyncStorage.getItem(STORAGE_KEYS.FIELDS);
-        return data ? JSON.parse(data) : [];
+        const parsed = data ? JSON.parse(data) : [];
+        return parsed.map(normalizeField); // ✅ chuẩn hoá khi đọc ra
     } catch (error) {
         console.error('Lỗi lấy fields:', error);
         return [];
@@ -41,19 +79,18 @@ export const getFields = async () => {
 
 export const getFieldById = async (id) => {
     const fields = await getFields();
-    return fields.find(field => field.id === id);
+    return fields.find(f => f.id === toStr(id)) || null;
 };
 
 export const getFieldsBySport = async (sport) => {
     const fields = await getFields();
-    return fields.filter(field => field.sport === sport);
+    return fields.filter(f => f.sport === sport);
 };
 
 export const addField = async (newField) => {
     try {
         const fields = await getFields();
-        const newId = Date.now().toString();
-        const fieldToAdd = { ...newField, id: newId };
+        const fieldToAdd = normalizeField({ ...newField, id: Date.now().toString() });
         fields.push(fieldToAdd);
         await AsyncStorage.setItem(STORAGE_KEYS.FIELDS, JSON.stringify(fields));
         return { success: true, field: fieldToAdd };
@@ -62,11 +99,22 @@ export const addField = async (newField) => {
     }
 };
 
-// ========== BOOKING SERVICES ==========
+// Cập nhật available của sân
+const updateFieldAvailability = async (fieldId, available) => {
+    const fields = await getFields();
+    const index = fields.findIndex(f => f.id === toStr(fieldId)); // ✅ so sánh string
+    if (index !== -1) {
+        fields[index].available = toBool(available); // ✅ luôn lưu boolean
+        await AsyncStorage.setItem(STORAGE_KEYS.FIELDS, JSON.stringify(fields));
+    }
+};
+
+// ── BOOKING SERVICES ─────────────────────────────────────────────
 export const getBookings = async () => {
     try {
         const data = await AsyncStorage.getItem(STORAGE_KEYS.BOOKINGS);
-        return data ? JSON.parse(data) : [];
+        const parsed = data ? JSON.parse(data) : [];
+        return parsed.map(normalizeBooking);
     } catch (error) {
         console.error('Lỗi lấy bookings:', error);
         return [];
@@ -75,24 +123,21 @@ export const getBookings = async () => {
 
 export const getUserBookings = async (userId) => {
     const bookings = await getBookings();
-    return bookings.filter(booking => booking.userId === userId);
+    return bookings.filter(b => b.userId === toStr(userId)); // ✅ so sánh string
 };
 
 export const createBooking = async (bookingData) => {
     try {
         const bookings = await getBookings();
-        const newBooking = {
+        const newBooking = normalizeBooking({
             id: Date.now().toString(),
             ...bookingData,
             status: 'pending',
-            createdAt: new Date().toISOString()
-        };
+            createdAt: new Date().toISOString(),
+        });
         bookings.push(newBooking);
         await AsyncStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(bookings));
-
-        // Cập nhật trạng thái available của sân
         await updateFieldAvailability(bookingData.fieldId, false);
-
         return { success: true, booking: newBooking };
     } catch (error) {
         return { success: false, error: error.message };
@@ -102,7 +147,7 @@ export const createBooking = async (bookingData) => {
 export const updateBookingStatus = async (bookingId, status) => {
     try {
         const bookings = await getBookings();
-        const index = bookings.findIndex(b => b.id === bookingId);
+        const index = bookings.findIndex(b => b.id === toStr(bookingId));
         if (index !== -1) {
             bookings[index].status = status;
             await AsyncStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(bookings));
@@ -114,21 +159,12 @@ export const updateBookingStatus = async (bookingId, status) => {
     }
 };
 
-// Cập nhật trạng thái sân
-const updateFieldAvailability = async (fieldId, available) => {
-    const fields = await getFields();
-    const index = fields.findIndex(f => f.id === fieldId);
-    if (index !== -1) {
-        fields[index].available = available;
-        await AsyncStorage.setItem(STORAGE_KEYS.FIELDS, JSON.stringify(fields));
-    }
-};
-
-// ========== USER SERVICES ==========
+// ── USER SERVICES ────────────────────────────────────────────────
 export const getUsers = async () => {
     try {
         const data = await AsyncStorage.getItem(STORAGE_KEYS.USERS);
-        return data ? JSON.parse(data) : [];
+        const parsed = data ? JSON.parse(data) : [];
+        return parsed.map(normalizeUser);
     } catch (error) {
         console.error('Lỗi lấy users:', error);
         return [];
@@ -137,22 +173,20 @@ export const getUsers = async () => {
 
 export const findUserByEmail = async (email) => {
     const users = await getUsers();
-    return users.find(user => user.email === email);
+    return users.find(u => u.email === email) || null;
 };
 
 export const createUser = async (userData) => {
     try {
-        const users = await getUsers();
-        const existingUser = await findUserByEmail(userData.email);
-        if (existingUser) {
-            return { success: false, error: 'Email đã tồn tại' };
-        }
+        const existing = await findUserByEmail(userData.email);
+        if (existing) return { success: false, error: 'Email đã tồn tại' };
 
-        const newUser = {
+        const users = await getUsers();
+        const newUser = normalizeUser({
             id: Date.now().toString(),
             ...userData,
-            createdAt: new Date().toISOString()
-        };
+            createdAt: new Date().toISOString(),
+        });
         users.push(newUser);
         await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
         return { success: true, user: newUser };
@@ -161,30 +195,23 @@ export const createUser = async (userData) => {
     }
 };
 
-// Lưu user hiện tại (đã đăng nhập)
 export const saveCurrentUser = async (user) => {
     try {
         await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
         return true;
-    } catch (error) {
-        return false;
-    }
+    } catch (error) { return false; }
 };
 
 export const getCurrentUser = async () => {
     try {
         const data = await AsyncStorage.getItem(STORAGE_KEYS.CURRENT_USER);
-        return data ? JSON.parse(data) : null;
-    } catch (error) {
-        return null;
-    }
+        return data ? normalizeUser(JSON.parse(data)) : null;
+    } catch (error) { return null; }
 };
 
 export const clearCurrentUser = async () => {
     try {
         await AsyncStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
         return true;
-    } catch (error) {
-        return false;
-    }
+    } catch (error) { return false; }
 };
