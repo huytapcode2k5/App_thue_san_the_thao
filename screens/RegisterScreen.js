@@ -84,7 +84,7 @@ export default function RegisterScreen({ navigation }) {
                         <Text style={styles.heroBold}>Mới.</Text>
                     </Text>
                     <Text style={styles.heroSub}>
-                        Bắt đầu hành trình chinh phục sân đấu{'\n'}ngay hôm nay.
+                        Bắt đầu hành trình chinh phục sân đấu ngay hôm nay.
                     </Text>
                 </View>
 
@@ -227,13 +227,17 @@ const styles = StyleSheet.create({
     topBar: { paddingTop: 48, marginBottom: 24 },
     backBtn: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
     backArrow: { fontSize: 16, color: GREEN_LIGHT, marginRight: 6 },
-    backText: { fontSize: 14, color: GREEN_LIGHT, fontWeight: '600' },
-    pageLabel: { fontSize: 13, color: '#888' },
+    backText: {
+        fontSize: 14,
+        color: GREEN_LIGHT,
+        fontWeight: '600'
+    },
+    pageLabel: { fontSize: 20, color: GREEN_LIGHT, textAlign: 'center', fontWeight: '700' },
 
     // Hero
     heroSection: { marginBottom: 32 },
     heroText: { lineHeight: 48, marginBottom: 10 },
-    heroNormal: { fontSize: 38, fontWeight: '400', color: '#222' },
+    heroNormal: { fontSize: 38, fontWeight: '900', color: '#222' },
     heroBold: { fontSize: 38, fontWeight: '900', color: '#111' },
     heroSub: { fontSize: 13, color: '#666', lineHeight: 20 },
 
