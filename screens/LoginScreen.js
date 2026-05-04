@@ -78,9 +78,7 @@ export default function LoginScreen({ navigation }) {
                     {/* Password */}
                     <View style={styles.labelRow}>
                         <Text style={styles.label}>MẬT KHẨU</Text>
-                        <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-                            <Text style={styles.forgotText}>Quên mật khẩu?</Text>
-                        </TouchableOpacity>
+
                     </View>
                     <View style={styles.inputWrapper}>
                         <Text style={styles.inputIcon}>🔒</Text>
@@ -95,8 +93,11 @@ export default function LoginScreen({ navigation }) {
                         <TouchableOpacity onPress={() => setShowPass(!showPass)}>
                             <Text style={styles.eyeIcon}>{showPass ? '🙈' : '👁'}</Text>
                         </TouchableOpacity>
-                    </View>
 
+                    </View>
+                    <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+                        <Text style={styles.forgotText}>Quên mật khẩu?</Text>
+                    </TouchableOpacity>
                     {/* Nút đăng nhập */}
                     <TouchableOpacity
                         style={[styles.loginBtn, loading && styles.loginBtnDisabled]}
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
     },
     label: { fontSize: 11, fontWeight: '700', color: '#888', letterSpacing: 0.8, marginBottom: 6, marginTop: 4 },
     labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, marginBottom: 6 },
-    forgotText: { fontSize: 12, color: GREEN_LIGHT, fontWeight: '600' },
+    forgotText: { fontSize: 12, color: GREEN_LIGHT, fontWeight: '600', left: '250' },
     inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f7f7f7', borderRadius: 12, paddingHorizontal: 12, height: 48, borderWidth: 1, borderColor: '#eee' },
     inputIcon: { fontSize: 16, marginRight: 8, color: '#aaa' },
     input: { flex: 1, fontSize: 14, color: '#333' },
