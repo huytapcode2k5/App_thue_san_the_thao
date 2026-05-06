@@ -11,6 +11,8 @@ import CartScreen from '../screens/CartScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ShopScreen from '../screens/ShopScreen';
 import ProductDetailScreen from '../screens/ProductDetailScreen';
+import PaymentScreen from '../screens/PaymentScreen';
+import PaymentConfirmScreen from '../screens/PaymentConfirmScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -48,7 +50,24 @@ function BookingStack() {
 function CartStack() {
     return (
         <Stack.Navigator>
-            <Stack.Screen name="CartScreen" component={CartScreen} options={{ headerShown: false }} />
+            <Stack.Screen
+                name="CartScreen"
+                component={CartScreen}
+                options={{ headerShown: false }}
+            />
+
+            {/* 👇 THÊM 2 MÀN HÌNH */}
+            <Stack.Screen
+                name="Payment"
+                component={PaymentScreen}
+                options={{ headerShown: false }}
+            />
+
+            <Stack.Screen
+                name="PaymentConfirm"
+                component={PaymentConfirmScreen}
+                options={{ headerShown: false }}
+            />
         </Stack.Navigator>
     );
 }

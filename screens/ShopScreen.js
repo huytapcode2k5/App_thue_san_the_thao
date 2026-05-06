@@ -83,7 +83,7 @@ function BannerCarousel() {
     );
 }
 
-function ProductCard({ product, onPress }) {
+function ProductCard({ product, onPress, onAdd }) {
     const discount = product.originalPrice
         ? Math.round((1 - product.price / product.originalPrice) * 100)
         : null;
@@ -126,9 +126,12 @@ function ProductCard({ product, onPress }) {
             </View>
 
             {/* Add button */}
-            <TouchableOpacity style={styles.addBtn}>
-                <Text style={styles.addBtnText}>+</Text>
-            </TouchableOpacity>
+            <TouchableOpacity
+  style={styles.addBtn}
+  onPress={() => onAdd(product)}
+>
+  <Text style={styles.addBtnText}>+</Text>
+</TouchableOpacity>
         </TouchableOpacity>
     );
 }
@@ -223,10 +226,18 @@ export default function ShopScreen({ navigation }) {
                     <View style={styles.grid}>
                         {filtered.map(p => (
                             <ProductCard
-                                key={p.id}
-                                product={p}
-                                onPress={(product) => navigation?.navigate('ProductDetail', { product })}
-                            />
+  key={p.id}
+  product={p}
+  onPress={(product) => navigation.navigate('ProductDetail', { product })}
+  onAdd={(product) =>
+    navigation.navigate("Cart", {
+      screen: "CartScreen",
+  params: {
+    newItem: product
+  }
+    })
+  }
+/>
                         ))}
                     </View>
                 )}
