@@ -1,10 +1,11 @@
 // screens/ProfileScreen.js
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
     View, Text, StyleSheet, ScrollView, TouchableOpacity,
-    StatusBar, Dimensions, Alert,
+    StatusBar, Dimensions, Alert, ActivityIndicator,
 } from 'react-native';
 import { AuthContext } from '../store/AuthContext';
+import { getUserBookings } from '../services/jsonDataService';
 
 const { width } = Dimensions.get('window');
 const GREEN = '#2E7D32';
@@ -39,18 +40,55 @@ function MenuItem({ icon, label, subtitle, onPress, danger }) {
     );
 }
 
-// ── Section title ─────────────────────────────────────────────────
 function SectionTitle({ title }) {
     return <Text style={styles.sectionTitle}>{title}</Text>;
+}
+
+// ── Stat item với loading skeleton ────────────────────────────────
+function StatItem({ value, label, loading }) {
+    return (
+        <View style={styles.statItem}>
+            {loading ? (
+                <View style={styles.statSkeleton} />
+            ) : (
+                <Text style={styles.statValue}>{value}</Text>
+            )}
+            <Text style={styles.statLabel}>{label}</Text>
+        </View>
+    );
 }
 
 export default function ProfileScreen({ navigation }) {
     const { user, logout } = useContext(AuthContext);
 
+    const [stats, setStats] = useState({ total: 0, confirmed: 0, pending: 0, totalSpent: 0 });
+    const [loadingStats, setLoadingStats] = useState(true);
+
     const fullName = user?.fullName || 'Người dùng';
     const email = user?.email || '';
-    const bookingCount = 26;
-    const rating = 4.9;
+
+    // ── Load booking thật từ AsyncStorage ─────────────────────────
+    useEffect(() => {
+        if (!user?.id) {
+            setLoadingStats(false);
+            return;
+        }
+        (async () => {
+            try {
+                const bookings = await getUserBookings(user.id);
+                const confirmed = bookings.filter(b => b.status === 'confirmed').length;
+                const pending = bookings.filter(b => b.status === 'pending').length;
+                const totalSpent = bookings
+                    .filter(b => b.status === 'confirmed')
+                    .reduce((sum, b) => sum + (b.totalPrice || 0), 0);
+                setStats({ total: bookings.length, confirmed, pending, totalSpent });
+            } catch (e) {
+                console.error('Lỗi load booking stats:', e);
+            } finally {
+                setLoadingStats(false);
+            }
+        })();
+    }, [user?.id]);
 
     const handleLogout = () => {
         Alert.alert(
@@ -63,6 +101,13 @@ export default function ProfileScreen({ navigation }) {
         );
     };
 
+    // Format tiền gọn: 1.200.000 → 1,2tr
+    const formatMoney = (amount) => {
+        if (amount >= 1000000) return `${(amount / 1000000).toFixed(1).replace('.0', '')}tr`;
+        if (amount >= 1000) return `${Math.round(amount / 1000)}k`;
+        return `${amount}`;
+    };
+    const thongbao = () => Alert.alert('Thông báo', 'Chưa có thông báo mới !');
     return (
         <View style={styles.root}>
             <StatusBar barStyle="light-content" backgroundColor={GREEN} />
@@ -70,10 +115,9 @@ export default function ProfileScreen({ navigation }) {
 
                 {/* ── HEADER ── */}
                 <View style={styles.header}>
-                    {/* Tiêu đề */}
                     <View style={styles.headerTop}>
                         <Text style={styles.headerTitle}>Thuê Sân Thể{'\n'}Thao</Text>
-                        <TouchableOpacity style={styles.notifBtn}>
+                        <TouchableOpacity style={styles.notifBtn} onPress={thongbao} activeOpacity={0.8}>
                             <Text style={styles.notifIcon}>🔔</Text>
                         </TouchableOpacity>
                     </View>
@@ -83,31 +127,56 @@ export default function ProfileScreen({ navigation }) {
                         <Avatar name={fullName} />
                         <View style={styles.profileInfo}>
                             <Text style={styles.profileName}>{fullName}</Text>
+                            <Text style={styles.profileEmail} numberOfLines={1}>{email}</Text>
                             <View style={styles.badgeRow}>
                                 <View style={styles.badge}>
                                     <Text style={styles.badgeStar}>★</Text>
-                                    <Text style={styles.badgeText}>THÀNH VIÊN VÀNG</Text>
+                                    <Text style={styles.badgeText}>THÀNH VIÊN</Text>
                                 </View>
                             </View>
                         </View>
                     </View>
 
-                    {/* Stats */}
+                    {/* Stats — lấy từ booking thật */}
                     <View style={styles.statsRow}>
-                        <View style={styles.statItem}>
-                            <Text style={styles.statValue}>{bookingCount}</Text>
-                            <Text style={styles.statLabel}>LỊCH ĐÃ CHI</Text>
-                        </View>
+                        <StatItem
+                            value={stats.total}
+                            label="TỔNG ĐẶT SÂN"
+                            loading={loadingStats}
+                        />
                         <View style={styles.statDivider} />
-                        <View style={styles.statItem}>
-                            <Text style={styles.statValue}>{rating}</Text>
-                            <Text style={styles.statLabel}>LY TIN</Text>
-                        </View>
+                        <StatItem
+                            value={stats.confirmed}
+                            label="ĐÃ XÁC NHẬN"
+                            loading={loadingStats}
+                        />
+                        <View style={styles.statDivider} />
+                        <StatItem
+                            value={formatMoney(stats.totalSpent)}
+                            label="ĐÃ CHI"
+                            loading={loadingStats}
+                        />
                     </View>
                 </View>
 
                 {/* ── BODY ── */}
                 <View style={styles.body}>
+
+                    {/* Booking nhanh */}
+                    {!loadingStats && stats.pending > 0 && (
+                        <View style={styles.pendingCard}>
+                            <Text style={styles.pendingIcon}>⏳</Text>
+                            <View style={{ flex: 1, marginLeft: 10 }}>
+                                <Text style={styles.pendingTitle}>
+                                    Bạn có {stats.pending} lịch đặt đang chờ xác nhận
+                                </Text>
+                                <Text style={styles.pendingSub}>Kiểm tra lịch sử để xem chi tiết</Text>
+                            </View>
+                            <TouchableOpacity onPress={() => navigation.navigate('History')}>
+                                <Text style={styles.pendingAction}>Xem →</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
 
                     {/* Quản lý tài khoản */}
                     <SectionTitle title="Quản lý tài khoản" />
@@ -116,13 +185,13 @@ export default function ProfileScreen({ navigation }) {
                             icon="👤"
                             label="Thông tin cá nhân"
                             subtitle="Cập nhật hồ sơ của bạn"
-                            onPress={() => Alert.alert('Thông tin cá nhân')}
+                            onPress={() => navigation.navigate('EditProfile')}
                         />
                         <View style={styles.menuSep} />
                         <MenuItem
                             icon="📅"
                             label="Lịch sử đặt sân"
-                            subtitle="Xem các lịch đặt đã qua"
+                            subtitle={loadingStats ? 'Đang tải...' : `${stats.total} lịch đặt`}
                             onPress={() => navigation.navigate('History')}
                         />
                         <View style={styles.menuSep} />
@@ -130,14 +199,14 @@ export default function ProfileScreen({ navigation }) {
                             icon="📍"
                             label="Địa chỉ đã lưu"
                             subtitle="Quản lý các địa chỉ của bạn"
-                            onPress={() => Alert.alert('Địa chỉ đã lưu')}
+                            onPress={() => Alert.alert('Địa chỉ đã lưu', 'Tính năng đang phát triển')}
                         />
                         <View style={styles.menuSep} />
                         <MenuItem
                             icon="💳"
                             label="Phương thức thanh toán"
                             subtitle="Quản lý ví và số tài khoản"
-                            onPress={() => Alert.alert('Thanh toán')}
+                            onPress={() => Alert.alert('Thanh toán', 'Tính năng đang phát triển')}
                         />
                     </View>
 
@@ -147,13 +216,13 @@ export default function ProfileScreen({ navigation }) {
                         <MenuItem
                             icon="⚙️"
                             label="Cài đặt"
-                            onPress={() => Alert.alert('Cài đặt')}
+                            onPress={() => Alert.alert('Cài đặt', 'Tính năng đang phát triển')}
                         />
                         <View style={styles.menuSep} />
                         <MenuItem
                             icon="🔑"
                             label="Đổi mật khẩu"
-                            onPress={() => Alert.alert('Đổi mật khẩu')}
+                            onPress={() => Alert.alert('Đổi mật khẩu', 'Tính năng đang phát triển')}
                         />
                     </View>
 
@@ -181,7 +250,6 @@ export default function ProfileScreen({ navigation }) {
 
                     <View style={{ height: 24 }} />
                 </View>
-
             </ScrollView>
         </View>
     );
@@ -203,9 +271,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row', justifyContent: 'space-between',
         alignItems: 'flex-start', marginBottom: 20,
     },
-    headerTitle: {
-        fontSize: 20, fontWeight: '800', color: '#fff', lineHeight: 26,
-    },
+    headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff', lineHeight: 26 },
     notifBtn: {
         width: 40, height: 40, borderRadius: 20,
         backgroundColor: 'rgba(255,255,255,0.2)',
@@ -224,7 +290,8 @@ const styles = StyleSheet.create({
     // Profile card
     profileCard: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 20 },
     profileInfo: { flex: 1 },
-    profileName: { fontSize: 20, fontWeight: '800', color: '#fff', marginBottom: 6 },
+    profileName: { fontSize: 20, fontWeight: '800', color: '#fff', marginBottom: 2 },
+    profileEmail: { fontSize: 12, color: 'rgba(255,255,255,0.75)', marginBottom: 6 },
     badgeRow: { flexDirection: 'row' },
     badge: {
         flexDirection: 'row', alignItems: 'center', gap: 4,
@@ -238,12 +305,16 @@ const styles = StyleSheet.create({
     // Stats
     statsRow: {
         flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.15)',
-        borderRadius: 16, paddingVertical: 14, paddingHorizontal: 24,
+        borderRadius: 16, paddingVertical: 14, paddingHorizontal: 16,
         justifyContent: 'space-around', alignItems: 'center',
     },
     statItem: { alignItems: 'center', flex: 1 },
     statValue: { fontSize: 22, fontWeight: '900', color: '#fff' },
-    statLabel: { fontSize: 10, color: 'rgba(255,255,255,0.75)', letterSpacing: 0.8, marginTop: 2 },
+    statLabel: { fontSize: 9, color: 'rgba(255,255,255,0.75)', letterSpacing: 0.6, marginTop: 3, textAlign: 'center' },
+    statSkeleton: {
+        width: 36, height: 22, borderRadius: 6,
+        backgroundColor: 'rgba(255,255,255,0.25)', marginBottom: 2,
+    },
     statDivider: { width: 1, height: 32, backgroundColor: 'rgba(255,255,255,0.3)' },
 
     // Body
@@ -252,6 +323,17 @@ const styles = StyleSheet.create({
         fontSize: 13, fontWeight: '700', color: '#555',
         letterSpacing: 0.5, marginBottom: 8, marginLeft: 4,
     },
+
+    // Pending card
+    pendingCard: {
+        flexDirection: 'row', alignItems: 'center',
+        backgroundColor: '#FFF8E1', borderRadius: 14, padding: 14,
+        marginBottom: 16, borderWidth: 1, borderColor: '#FFE082',
+    },
+    pendingIcon: { fontSize: 22 },
+    pendingTitle: { fontSize: 13, fontWeight: '700', color: '#795548' },
+    pendingSub: { fontSize: 11, color: '#A1887F', marginTop: 2 },
+    pendingAction: { fontSize: 13, fontWeight: '700', color: '#E65100', paddingLeft: 8 },
 
     // Menu card
     menuCard: {
@@ -285,14 +367,8 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
     bannerLeft: { flex: 1 },
-    bannerTag: {
-        fontSize: 10, fontWeight: '800', color: '#FFD700',
-        letterSpacing: 1.5, marginBottom: 6,
-    },
-    bannerTitle: {
-        fontSize: 16, fontWeight: '800', color: '#fff',
-        lineHeight: 22, marginBottom: 14,
-    },
+    bannerTag: { fontSize: 10, fontWeight: '800', color: '#FFD700', letterSpacing: 1.5, marginBottom: 6 },
+    bannerTitle: { fontSize: 16, fontWeight: '800', color: '#fff', lineHeight: 22, marginBottom: 14 },
     bannerBtn: {
         backgroundColor: '#fff', borderRadius: 20,
         paddingHorizontal: 16, paddingVertical: 8, alignSelf: 'flex-start',

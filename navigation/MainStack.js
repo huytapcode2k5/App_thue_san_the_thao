@@ -13,7 +13,7 @@ import ShopScreen from '../screens/ShopScreen';
 import ProductDetailScreen from '../screens/ProductDetailScreen';
 import PaymentScreen from '../screens/PaymentScreen';
 import PaymentConfirmScreen from '../screens/PaymentConfirmScreen';
-
+import EditProfileScreen from '../screens/EditProfileScreen';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
@@ -76,7 +76,9 @@ function ProfileStack() {
     return (
         <Stack.Navigator>
             <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: false }} />
         </Stack.Navigator>
+
     );
 }
 

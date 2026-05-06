@@ -1,11 +1,11 @@
-// store/AuthContext.js (SỬA LẠI)
 import React, { createContext, useState, useEffect } from 'react';
 import {
     getUsers,
     createUser,
     saveCurrentUser,
     getCurrentUser,
-    clearCurrentUser
+    clearCurrentUser,
+    updateUser,
 } from '../services/jsonDataService';
 
 export const AuthContext = createContext();
@@ -15,7 +15,6 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Kiểm tra user đã đăng nhập chưa
         checkUserLoggedIn();
     }, []);
 
@@ -29,10 +28,8 @@ export const AuthProvider = ({ children }) => {
         try {
             const users = await getUsers();
             const foundUser = users.find(u => u.email === email && u.password === password);
-
             if (foundUser) {
-                // Không lưu password vào state
-                const { password, ...userWithoutPassword } = foundUser;
+                const { password: _pw, ...userWithoutPassword } = foundUser;
                 setUser(userWithoutPassword);
                 await saveCurrentUser(userWithoutPassword);
                 return { success: true, user: userWithoutPassword };
@@ -45,20 +42,23 @@ export const AuthProvider = ({ children }) => {
     };
 
     const register = async (email, password, fullName, phone) => {
-        const result = await createUser({
-            email,
-            password,
-            fullName,
-            phone: phone || '',
-            role: 'user'
-        });
-
+        const result = await createUser({ email, password, fullName, phone: phone || '', role: 'user' });
         if (result.success) {
-            const { password, ...userWithoutPassword } = result.user;
+            const { password: _pw, ...userWithoutPassword } = result.user;
             return { success: true, user: userWithoutPassword };
         } else {
             return { success: false, error: result.error };
         }
+    };
+
+    // ── Cập nhật thông tin user ───────────────────────────────────
+    const updateProfile = async (updatedData) => {
+        if (!user?.id) return { success: false, error: 'Chưa đăng nhập' };
+        const result = await updateUser(user.id, updatedData);
+        if (result.success) {
+            setUser(result.user); // cập nhật state ngay lập tức
+        }
+        return result;
     };
 
     const logout = async () => {
@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+        <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile }}>
             {children}
         </AuthContext.Provider>
     );

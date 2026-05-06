@@ -1,4 +1,3 @@
-// services/jsonDataService.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import initialData from './data.json';
 
@@ -9,38 +8,32 @@ const STORAGE_KEYS = {
     CURRENT_USER: '@sport_current_user'
 };
 
-// ── Helper: ép kiểu an toàn ──────────────────────────────────────
-// Tránh lỗi "String cannot be cast to Boolean/Integer"
-const toStr = (v) => String(v);                          // id luôn là string
-const toBool = (v) => v === true || v === 'true';         // available luôn boolean
-const toNum = (v) => Number(v) || 0;                     // price, rating luôn number
+const toStr = (v) => String(v);
+const toBool = (v) => v === true || v === 'true';
+const toNum = (v) => Number(v) || 0;
 
-// Chuẩn hoá 1 field object từ JSON
 const normalizeField = (f) => ({
     ...f,
     id: toStr(f.id),
     price: toNum(f.price),
     rating: toNum(f.rating),
-    available: toBool(f.available),   // ✅ fix "String cannot be cast to Boolean"
+    available: toBool(f.available),
 });
 
-// Chuẩn hoá 1 user object
 const normalizeUser = (u) => ({
     ...u,
     id: toStr(u.id),
 });
 
-// Chuẩn hoá 1 booking object
 const normalizeBooking = (b) => ({
     ...b,
     id: toStr(b.id),
-    fieldId: toStr(b.fieldId),     // ✅ đảm bảo luôn là string khi so sánh
+    fieldId: toStr(b.fieldId),
     userId: toStr(b.userId),
     totalPrice: toNum(b.totalPrice),
     hours: toNum(b.hours),
 });
 
-// ── Khởi tạo data lần đầu ────────────────────────────────────────
 export const initializeData = async () => {
     try {
         const fields = await AsyncStorage.getItem(STORAGE_KEYS.FIELDS);
@@ -70,7 +63,7 @@ export const getFields = async () => {
     try {
         const data = await AsyncStorage.getItem(STORAGE_KEYS.FIELDS);
         const parsed = data ? JSON.parse(data) : [];
-        return parsed.map(normalizeField); // ✅ chuẩn hoá khi đọc ra
+        return parsed.map(normalizeField);
     } catch (error) {
         console.error('Lỗi lấy fields:', error);
         return [];
@@ -99,12 +92,11 @@ export const addField = async (newField) => {
     }
 };
 
-// Cập nhật available của sân
 const updateFieldAvailability = async (fieldId, available) => {
     const fields = await getFields();
-    const index = fields.findIndex(f => f.id === toStr(fieldId)); // ✅ so sánh string
+    const index = fields.findIndex(f => f.id === toStr(fieldId));
     if (index !== -1) {
-        fields[index].available = toBool(available); // ✅ luôn lưu boolean
+        fields[index].available = toBool(available);
         await AsyncStorage.setItem(STORAGE_KEYS.FIELDS, JSON.stringify(fields));
     }
 };
@@ -123,7 +115,7 @@ export const getBookings = async () => {
 
 export const getUserBookings = async (userId) => {
     const bookings = await getBookings();
-    return bookings.filter(b => b.userId === toStr(userId)); // ✅ so sánh string
+    return bookings.filter(b => b.userId === toStr(userId));
 };
 
 export const createBooking = async (bookingData) => {
@@ -190,6 +182,29 @@ export const createUser = async (userData) => {
         users.push(newUser);
         await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
         return { success: true, user: newUser };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
+// ── CẬP NHẬT THÔNG TIN USER ──────────────────────────────────────
+export const updateUser = async (userId, updatedData) => {
+    try {
+        const users = await getUsers();
+        const index = users.findIndex(u => u.id === toStr(userId));
+        if (index === -1) return { success: false, error: 'Không tìm thấy user' };
+
+        // Giữ nguyên password, chỉ update các field được phép
+        const { password, id, role, ...safeData } = updatedData;
+        users[index] = normalizeUser({ ...users[index], ...safeData });
+
+        await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+
+        // Cập nhật luôn current user (bỏ password)
+        const { password: _pw, ...userWithoutPassword } = users[index];
+        await saveCurrentUser(userWithoutPassword);
+
+        return { success: true, user: userWithoutPassword };
     } catch (error) {
         return { success: false, error: error.message };
     }
