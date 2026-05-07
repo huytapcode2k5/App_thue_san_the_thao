@@ -14,19 +14,22 @@ import ProductDetailScreen from '../screens/ProductDetailScreen';
 import PaymentScreen from '../screens/PaymentScreen';
 import PaymentConfirmScreen from '../screens/PaymentConfirmScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
+import HistoryScreen from '../screens/HistoryScreen';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 const PRIMARY = '#4CAF50';
 
 // Placeholder History
-function HistoryScreen() {
+function HistoryStack() {
     return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0faf0' }}>
-            <Text style={{ fontSize: 48, marginBottom: 12 }}>🕓</Text>
-            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#2E7D32', marginBottom: 8 }}>Lịch sử</Text>
-            <Text style={{ fontSize: 14, color: '#888' }}>Màn hình đang được phát triển</Text>
-        </View>
+        <Stack.Navigator>
+            <Stack.Screen
+                name="HistoryScreen"
+                component={HistoryScreen}
+                options={{ headerShown: false }}
+            />
+        </Stack.Navigator>
     );
 }
 
@@ -157,7 +160,7 @@ export default function MainStack() {
             <Tab.Screen name="Booking" component={BookingStack} />
             <Tab.Screen name="Shop" component={ShopStack} />
             <Tab.Screen name="Cart" component={CartStack} />
-            <Tab.Screen name="History" component={HistoryScreen} />
+            <Tab.Screen name="History" component={HistoryStack} />
             <Tab.Screen name="Profile" component={ProfileStack} />
         </Tab.Navigator>
     );

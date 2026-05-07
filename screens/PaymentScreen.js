@@ -1,14 +1,17 @@
-import React, { useState } from "react";
+// screens/PaymentScreen.js
+
+import React, { useContext, useMemo, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
+  ScrollView,
   TouchableOpacity,
   Image,
-  ScrollView,
-  TextInput,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { CartContext } from "./CartContext";
 
 const images = {
   SanCauLong: require("../assets/SanCauLong.png"),
@@ -17,309 +20,414 @@ const images = {
 };
 
 export default function PaymentScreen({ navigation, route }) {
-  const { items = [] } = route.params || {};
-  const [method, setMethod] = useState("momo");
+  const { cartItems } = useContext(CartContext);
+
+  // 👇 Lấy items từ route nếu có
+  const directItems = route.params?.items;
+
+  // 👇 Nếu có params thì dùng params
+  // không thì dùng cartItems
+  const items =
+    directItems && directItems.length > 0
+      ? directItems
+      : cartItems;
+
+  const [paymentMethod, setPaymentMethod] = useState("MoMo");
 
   const fee = 15000;
-  const discount = 150000;
 
-  const subtotal = items.reduce(
-    (s, i) => s + i.price * i.quantity,
-    0
-  );
+  const subtotal = useMemo(() => {
+    return items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+  }, [items]);
 
-  const [editing, setEditing] = useState(false);
+  const total = subtotal + fee;
 
-const [name, setName] = useState("Nguyễn Văn A");
-const [phone, setPhone] = useState("0901234567");
-const [address, setAddress] = useState("Landmark 81");
-const [city, setCity] = useState("TP. Hồ Chí Minh");
-  const total = subtotal + fee - discount;
+  const handlePayment = () => {
+    
+
+    navigation.navigate("PaymentConfirm", {
+      items: items,
+      paymentMethod,
+    });
+  };
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       {/* HEADER */}
       <View style={styles.header}>
-        <Ionicons
-          name="arrow-back"
-          size={22}
-          onPress={() => navigation.goBack()}
-        />
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+
         <Text style={styles.headerTitle}>Thanh toán</Text>
-        <View style={{ width: 22 }} />
+
+        <View style={{ width: 24 }} />
       </View>
 
-      {/* ADDRESS */}
-      <View style={styles.box}>
-        <View style={styles.rowBetween}>
-          <Text style={styles.title}>Địa chỉ nhận hàng</Text>
-          <TouchableOpacity onPress={() => setEditing(!editing)}>
-  <Text style={styles.change}>
-    {editing ? "Lưu" : "Thay đổi"}
-  </Text>
-</TouchableOpacity>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 30 }}
+      >
+        {/* ADDRESS */}
+        <View style={styles.box}>
+          <Text style={styles.sectionTitle}>Địa điểm đặt sân</Text>
+
+          <View style={styles.locationRow}>
+            <Ionicons name="location" size={22} color="#2e7d32" />
+
+            <View style={{ marginLeft: 10, flex: 1 }}>
+              <Text style={styles.locationName}>
+                Trung tâm thể thao Kinetic Pulse
+              </Text>
+
+              <Text style={styles.locationAddress}>
+                123 Lý Thường Kiệt, TP.HCM
+              </Text>
+            </View>
+          </View>
         </View>
 
-        {editing ? (
-  <>
-    <TextInput
-      value={name}
-      onChangeText={setName}
-      placeholder="Tên"
-      style={styles.input}
-    />
+        {/* CART ITEMS */}
+        <View style={styles.box}>
+          <Text style={styles.sectionTitle}>Chi tiết dịch vụ</Text>
 
-    <TextInput
-      value={phone}
-      onChangeText={setPhone}
-      placeholder="SĐT"
-      keyboardType="phone-pad"
-      style={styles.input}
-    />
+          {items.map((item) => (
+            <View key={item.id} style={styles.itemRow}>
+              <Image
+                source={images[item.image]}
+                style={styles.itemImage}
+              />
 
-    <TextInput
-      value={address}
-      onChangeText={setAddress}
-      placeholder="Địa chỉ"
-      style={styles.input}
-    />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.itemName}>{item.name}</Text>
 
-    <TextInput
-      value={city}
-      onChangeText={setCity}
-      placeholder="Thành phố"
-      style={styles.input}
-    />
-  </>
-) : (
-  <>
-    <Text style={styles.bold}>
-      {name} - {phone}
-    </Text>
-    <Text style={styles.gray}>{address}</Text>
-    <Text style={styles.gray}>{city}</Text>
-  </>
-)}
-      </View>
+                <Text style={styles.itemTime}>
+                  {item.time || "18:00 - 20:00"}
+                </Text>
 
-      {/* PRODUCTS */}
-      <View style={styles.box}>
-        <Text style={styles.title}>Sản phẩm</Text>
+                <Text style={styles.itemQuantity}>
+                  Số lượng: {item.quantity}
+                </Text>
+              </View>
 
-        {items.map((item) => (
-          <View key={item.id} style={styles.product}>
-            <Image source={images[item.image]} style={styles.img} />
+              <Text style={styles.itemPrice}>
+                {(item.price * item.quantity).toLocaleString()}đ
+              </Text>
+            </View>
+          ))}
+        </View>
 
-            <View style={{ flex: 1 }}>
-              <Text style={styles.bold}>{item.name}</Text>
-              <Text style={styles.gray}>{item.time}</Text>
-              <Text style={styles.price}>
-                {item.price.toLocaleString()}đ
+        {/* PAYMENT METHOD */}
+        <View style={styles.box}>
+          <Text style={styles.sectionTitle}>
+            Phương thức thanh toán
+          </Text>
+
+          {/* MOMO */}
+          <TouchableOpacity
+            style={[
+              styles.paymentItem,
+              paymentMethod === "MoMo" && styles.paymentActive,
+            ]}
+            onPress={() => setPaymentMethod("MoMo")}
+          >
+            <View style={styles.paymentLeft}>
+              <Ionicons
+                name="wallet-outline"
+                size={22}
+                color="#d81b60"
+              />
+
+              <Text style={styles.paymentText}>Ví MoMo</Text>
+            </View>
+
+            {paymentMethod === "MoMo" && (
+              <Ionicons
+                name="checkmark-circle"
+                size={22}
+                color="#2e7d32"
+              />
+            )}
+          </TouchableOpacity>
+
+          {/* CASH */}
+          <TouchableOpacity
+            style={[
+              styles.paymentItem,
+              paymentMethod === "Tiền mặt" &&
+                styles.paymentActive,
+            ]}
+            onPress={() => setPaymentMethod("Tiền mặt")}
+          >
+            <View style={styles.paymentLeft}>
+              <Ionicons
+                name="cash-outline"
+                size={22}
+                color="#ff9800"
+              />
+
+              <Text style={styles.paymentText}>
+                Thanh toán tiền mặt
               </Text>
             </View>
 
-            <Text>x{item.quantity}</Text>
-          </View>
-        ))}
-      </View>
+            {paymentMethod === "Tiền mặt" && (
+              <Ionicons
+                name="checkmark-circle"
+                size={22}
+                color="#2e7d32"
+              />
+            )}
+          </TouchableOpacity>
 
-      {/* SHIPPING */}
-      <View style={styles.box}>
-        <Text style={styles.title}>Phương thức vận chuyển</Text>
+          {/* CARD */}
+          <TouchableOpacity
+            style={[
+              styles.paymentItem,
+              paymentMethod === "Ngân hàng" &&
+                styles.paymentActive,
+            ]}
+            onPress={() => setPaymentMethod("Ngân hàng")}
+          >
+            <View style={styles.paymentLeft}>
+              <Ionicons
+                name="card-outline"
+                size={22}
+                color="#1565c0"
+              />
 
-        <View style={styles.ship}>
-          <Ionicons name="bicycle-outline" size={20} />
-          <View style={{ marginLeft: 10 }}>
-            <Text>Giao nhanh (2-3 giờ)</Text>
-            <Text style={styles.gray}>Nhận trong ngày</Text>
-          </View>
-          <Text>{fee.toLocaleString()}đ</Text>
+              <Text style={styles.paymentText}>
+                Thẻ ngân hàng
+              </Text>
+            </View>
+
+            {paymentMethod === "Ngân hàng" && (
+              <Ionicons
+                name="checkmark-circle"
+                size={22}
+                color="#2e7d32"
+              />
+            )}
+          </TouchableOpacity>
         </View>
-      </View>
 
-      {/* VOUCHER */}
-      <View style={styles.voucher}>
-        <TextInput placeholder="Nhập mã giảm giá" style={{ flex: 1 }} />
-        <TouchableOpacity style={styles.applyBtn}>
-          <Text style={{ color: "#fff" }}>Áp dụng</Text>
-        </TouchableOpacity>
-      </View>
+        {/* SUMMARY */}
+        <View style={styles.box}>
+          <Text style={styles.sectionTitle}>Tổng thanh toán</Text>
 
-      {/* PAYMENT METHOD */}
-      <View style={styles.box}>
-        <Text style={styles.title}>Phương thức thanh toán</Text>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Tạm tính</Text>
 
-        {renderMethod("momo", "Ví MoMo", method, setMethod)}
-        {renderMethod("zalo", "ZaloPay", method, setMethod)}
-        {renderMethod("card", "Visa / Mastercard", method, setMethod)}
-      </View>
+            <Text style={styles.summaryValue}>
+              {subtotal.toLocaleString()}đ
+            </Text>
+          </View>
 
-      {/* SUMMARY */}
-      <View style={styles.box}>
-        <Text style={styles.title}>Chi tiết thanh toán</Text>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Phí dịch vụ</Text>
 
-        <Row label="Tạm tính" value={subtotal} />
-        <Row label="Phí vận chuyển" value={fee} />
-        <Row label="Giảm giá" value={-discount} red />
+            <Text style={styles.summaryValue}>
+              {fee.toLocaleString()}đ
+            </Text>
+          </View>
 
-        <View style={styles.totalRow}>
-          <Text style={styles.bold}>Tổng cộng</Text>
-          <Text style={styles.total}>
-            {total.toLocaleString()}đ
-          </Text>
+          <View style={styles.divider} />
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.totalLabel}>Tổng cộng</Text>
+
+            <Text style={styles.totalValue}>
+              {total.toLocaleString()}đ
+            </Text>
+          </View>
         </View>
-      </View>
+      </ScrollView>
 
       {/* BUTTON */}
-      <TouchableOpacity
-  style={styles.orderBtn}
-  onPress={() =>
-    navigation.navigate("PaymentConfirm", {
-      items,
-      total,
-      method,
-    })
-  }
->
-  <Text style={styles.orderText}>Đặt hàng</Text>
-</TouchableOpacity>
-    </ScrollView>
+      <View style={styles.bottomContainer}>
+        <TouchableOpacity
+          style={styles.payButton}
+          onPress={handlePayment}
+        >
+          <Text style={styles.payButtonText}>
+            Xác nhận thanh toán
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
-const renderMethod = (key, label, method, setMethod) => (
-  <TouchableOpacity
-    style={[
-      styles.method,
-      method === key && styles.methodActive,
-    ]}
-    onPress={() => setMethod(key)}
-  >
-    <Text>{label}</Text>
-    {method === key && (
-      <Ionicons name="checkmark-circle" color="#2e7d32" size={18} />
-    )}
-  </TouchableOpacity>
-);
-
-const Row = ({ label, value, red }) => (
-  <View style={styles.rowBetween}>
-    <Text>{label}</Text>
-    <Text style={{ color: red ? "red" : "#000" }}>
-      {value < 0 ? "- " : ""}
-      {Math.abs(value).toLocaleString()}đ
-    </Text>
-  </View>
-);
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5", paddingTop: 50 },
-
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginHorizontal: 15,
+  container: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
   },
 
-  headerTitle: { fontWeight: "bold", fontSize: 16 },
+  header: {
+    paddingTop: 55,
+    paddingBottom: 15,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
+  },
+
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111",
+  },
 
   box: {
     backgroundColor: "#fff",
-    margin: 15,
-    padding: 15,
-    borderRadius: 12,
-  },
-
-  title: { fontWeight: "bold", marginBottom: 10 },
-
-  bold: { fontWeight: "bold" },
-
-  gray: { color: "#777", fontSize: 12 },
-
-  change: { color: "#2e7d32" },
-
-  product: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 10,
-  },
-
-  img: { width: 50, height: 50, borderRadius: 8, marginRight: 10 },
-
-  price: { color: "#2e7d32", fontWeight: "bold" },
-
-  ship: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#eef7ee",
-    padding: 10,
-    borderRadius: 10,
-  },
-
-  voucher: {
-    flexDirection: "row",
     marginHorizontal: 15,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 5,
+    marginTop: 15,
+    padding: 15,
+    borderRadius: 16,
+  },
+
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 15,
+    color: "#111",
+  },
+
+  locationRow: {
+    flexDirection: "row",
     alignItems: "center",
   },
 
-  applyBtn: {
-    backgroundColor: "#2e7d32",
-    padding: 10,
-    borderRadius: 8,
+  locationName: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#111",
   },
 
-  method: {
+  locationAddress: {
+    marginTop: 4,
+    color: "#777",
+    fontSize: 13,
+  },
+
+  itemRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 12,
-    borderRadius: 10,
-    backgroundColor: "#f2f2f2",
-    marginTop: 8,
+    alignItems: "center",
+    marginBottom: 15,
   },
 
-  methodActive: {
-    borderColor: "#2e7d32",
-    borderWidth: 1.5,
-    backgroundColor: "#e8f5e9",
+  itemImage: {
+    width: 75,
+    height: 75,
+    borderRadius: 12,
+    marginRight: 12,
   },
 
-  rowBetween: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 3,
+  itemName: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#111",
   },
 
-  totalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
+  itemTime: {
+    marginTop: 4,
+    fontSize: 12,
+    color: "#666",
   },
 
-  total: {
+  itemQuantity: {
+    marginTop: 4,
+    fontSize: 12,
+    color: "#666",
+  },
+
+  itemPrice: {
+    fontWeight: "700",
     color: "#2e7d32",
-    fontWeight: "bold",
+    fontSize: 14,
+  },
+
+  paymentItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+  },
+
+  paymentActive: {
+    borderColor: "#2e7d32",
+    backgroundColor: "#f1fff1",
+  },
+
+  paymentLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  paymentText: {
+    marginLeft: 10,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+
+  summaryLabel: {
+    color: "#666",
+    fontSize: 14,
+  },
+
+  summaryValue: {
+    color: "#111",
+    fontSize: 14,
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: "#eee",
+    marginVertical: 10,
+  },
+
+  totalLabel: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#111",
+  },
+
+  totalValue: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#2e7d32",
+  },
+
+  bottomContainer: {
+    padding: 15,
+    backgroundColor: "#fff",
+  },
+
+  payButton: {
+    backgroundColor: "#2e7d32",
+    paddingVertical: 16,
+    borderRadius: 30,
+    alignItems: "center",
+  },
+
+  payButtonText: {
+    color: "#fff",
+    fontWeight: "700",
     fontSize: 16,
   },
-
-  orderBtn: {
-    backgroundColor: "#0a7d2c",
-    margin: 15,
-    padding: 15,
-    borderRadius: 25,
-    alignItems: "center",
-  },
-
-  orderText: { color: "#fff", fontWeight: "bold" },
-  input: {
-  borderWidth: 1,
-  borderColor: "#ddd",
-  borderRadius: 8,
-  padding: 8,
-  marginBottom: 8,
-},
 });
-

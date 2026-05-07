@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useContext } from 'react';
 import {
     View, Text, StyleSheet, ScrollView, TouchableOpacity,
     StatusBar, Animated, Dimensions, Alert
 } from 'react-native';
+import { CartContext } from "./CartContext";
 
 const { width } = Dimensions.get('window');
 const PRIMARY = '#2E7D32';
@@ -78,6 +79,7 @@ function RelatedCard({ item, onPress }) {
 // ── Main Screen ─────────────────────────────────────────────────
 export default function ProductDetailScreen({ route, navigation }) {
     // Nhận product từ navigation hoặc dùng mock
+    const { addToCart } = useContext(CartContext);
     const product = route?.params?.product ?? {
         id: '1',
         name: 'Giày Chạy Bộ Performance Pulse 2i',
@@ -107,20 +109,60 @@ export default function ProductDetailScreen({ route, navigation }) {
     });
 
     const handleAddToCart = () => {
-        if (!selectedSize) {
-            Alert.alert('Chọn size', 'Vui lòng chọn size trước khi thêm vào giỏ hàng.');
-            return;
-        }
-        Alert.alert('✅ Thành công', `Đã thêm ${qty} sản phẩm vào giỏ hàng!`);
+    if (!selectedSize) {
+        Alert.alert(
+            "Chọn size",
+            "Vui lòng chọn size trước khi thêm vào giỏ hàng."
+        );
+        return;
+    }
+
+    const cartItem = {
+        id: product.id + "-" + selectedSize,
+        name: product.name,
+        price: product.price,
+        quantity: qty,
+        image: "SanBongDa",
+        time: "18:00 - 20:00",
+        size: selectedSize,
+        color: selectedColor,
     };
 
+    addToCart(cartItem);
+
+    Alert.alert(
+        "✅ Thành công",
+        "Sản phẩm đã được thêm vào giỏ hàng!"
+    );
+};
+
     const handleBuyNow = () => {
-        if (!selectedSize) {
-            Alert.alert('Chọn size', 'Vui lòng chọn size trước khi mua.');
-            return;
-        }
-        navigation?.navigate('Cart');
+    if (!selectedSize) {
+        Alert.alert(
+            "Chọn size",
+            "Vui lòng chọn size trước khi mua."
+        );
+        return;
+    }
+
+    const paymentItem = {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        quantity: qty,
+        image: "SanBongDa",
+        time: "18:00 - 20:00",
+        size: selectedSize,
+        color: selectedColor,
     };
+
+    navigation.navigate("Cart", {
+        screen: "Payment",
+        params: {
+            items: [paymentItem],
+        },
+    });
+};
 
     return (
         <View style={styles.container}>

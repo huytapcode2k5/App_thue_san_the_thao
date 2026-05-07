@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,10 @@ import {
   Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+
+import { HistoryContext } from "../screens/HistoryContext";
+import { CartContext } from "../screens/CartContext";
 
 const images = {
   SanCauLong: require("../assets/SanCauLong.png"),
@@ -15,56 +19,123 @@ const images = {
   SanTennis: require("../assets/SanTennis.png"),
 };
 
-export default function PaymentConfirmScreen({ navigation, route }) {
+export default function PaymentConfirmScreen({ route }) {
+  const navigation = useNavigation();
+
+  const { addOrder } = useContext(HistoryContext);
+  const { clearCart } = useContext(CartContext);
+
   const items = route.params?.items || [];
 
   const fee = 15000;
 
   const subtotal = items.reduce(
-    (s, i) => s + i.price * i.quantity,
+    (sum, item) => sum + item.price * item.quantity,
     0
   );
 
   const total = subtotal + fee;
 
+  // HANDLE BACK HOME
+  const handleBackHome = () => {
+    const order = {
+      id: Date.now(),
+      code: Math.floor(Math.random() * 99999),
+      date: new Date().toLocaleDateString(),
+
+      items: items.map((item) => ({
+        ...item,
+        image: item.image || "SanBongDa",
+        time: item.time || "18:00 - 20:00",
+      })),
+
+      total: total,
+      method: "Ví MoMo",
+      status: "ĐÃ THANH TOÁN",
+    };
+
+    // Lưu lịch sử
+    addOrder(order);
+
+    // Xóa giỏ hàng
+    clearCart();
+
+    // Reset về Home
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Home" }],
+    });
+  };
+
   return (
     <ScrollView style={styles.container}>
       {/* HEADER */}
       <View style={styles.header}>
-        <Ionicons name="arrow-back" size={22} onPress={() => navigation.goBack()} />
         <Text style={styles.headerTitle}>Chi tiết đơn hàng</Text>
         <Text style={styles.code}>#{Math.floor(Math.random() * 99999)}</Text>
       </View>
 
-      {/* SUCCESS BOX */}
+      {/* SUCCESS */}
       <View style={styles.successBox}>
         <View>
           <Text style={styles.successTitle}>ĐÃ XÁC NHẬN</Text>
-          <Text style={styles.successSub}>Sân đã sẵn sàng cho bạn lúc 18:00</Text>
+          <Text style={styles.successSub}>
+            Thanh toán thành công
+          </Text>
         </View>
-        <Ionicons name="checkmark-circle" size={30} color="#fff" />
+
+        <Ionicons
+          name="checkmark-circle"
+          size={34}
+          color="#fff"
+        />
       </View>
 
       {/* TIMELINE */}
       <View style={styles.box}>
         <Text style={styles.title}>Tiến độ đơn hàng</Text>
 
-        <TimelineItem active text="Đặt hàng thành công" time="06:46 AM" />
-        <TimelineItem active text="Đã xác nhận" time="10:48 AM" />
-        <TimelineItem text="Hoàn tất" time="Đơn hoàn tất sau khi kết thúc" />
+        <TimelineItem
+          active
+          text="Đặt sân thành công"
+          time="06:46 AM"
+        />
+
+        <TimelineItem
+          active
+          text="Đã thanh toán"
+          time="10:48 AM"
+        />
+
+        <TimelineItem
+          text="Hoàn tất"
+          time="Sau khi kết thúc trận"
+        />
       </View>
 
       {/* ITEMS */}
       <View style={styles.box}>
         <Text style={styles.title}>Chi tiết dịch vụ</Text>
 
-        {items.map((item) => (
-          <View key={item.id} style={styles.item}>
-            <Image source={images[item.image]} style={styles.img} />
+        {items.map((item, index) => (
+          <View key={index} style={styles.item}>
+            <Image
+              source={images[item.image]}
+              style={styles.img}
+            />
 
             <View style={{ flex: 1 }}>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.gray}>{item.time}</Text>
+              <Text style={styles.name}>
+                {item.name}
+              </Text>
+
+              <Text style={styles.gray}>
+                {item.time || "18:00 - 20:00"}
+              </Text>
+
+              <Text style={styles.gray}>
+                SL: {item.quantity}
+              </Text>
             </View>
 
             <Text style={styles.price}>
@@ -85,80 +156,143 @@ export default function PaymentConfirmScreen({ navigation, route }) {
         </View>
 
         <View style={styles.row}>
-          <Text style={styles.bold}>Tổng cộng</Text>
-          <Text style={styles.total}>{total.toLocaleString()}đ</Text>
+          <Text style={styles.totalLabel}>Tổng cộng</Text>
+          <Text style={styles.totalPrice}>
+            {total.toLocaleString()}đ
+          </Text>
         </View>
       </View>
 
       {/* PAYMENT */}
       <View style={styles.box}>
-        <Text style={styles.title}>Phương thức thanh toán</Text>
+        <Text style={styles.title}>
+          Phương thức thanh toán
+        </Text>
 
         <View style={styles.method}>
-          <Ionicons name="wallet-outline" size={18} />
-          <Text style={{ marginLeft: 10 }}>Ví điện tử MoMo</Text>
-          <Text style={styles.success}>Đã thanh toán</Text>
+          <View style={styles.methodLeft}>
+            <Ionicons
+              name="wallet-outline"
+              size={20}
+              color="#2e7d32"
+            />
+
+            <Text style={styles.methodText}>
+              Ví điện tử MoMo
+            </Text>
+          </View>
+
+          <Text style={styles.success}>
+            Đã thanh toán
+          </Text>
         </View>
       </View>
 
       {/* LOCATION */}
       <View style={styles.box}>
         <Text style={styles.title}>Địa điểm</Text>
-        <Text style={styles.bold}>Trung tâm thể thao Kinetic Pulse</Text>
-        <Text style={styles.gray}>123 Lý Thường Kiệt, TP.HCM</Text>
+
+        <Text style={styles.bold}>
+          Trung tâm thể thao Kinetic Pulse
+        </Text>
+
+        <Text style={styles.gray}>
+          123 Lý Thường Kiệt, TP.HCM
+        </Text>
 
         <TouchableOpacity style={styles.mapBtn}>
-          <Ionicons name="navigate-outline" size={16} />
-          <Text style={{ marginLeft: 5 }}>Chỉ đường</Text>
+          <Ionicons
+            name="navigate-outline"
+            size={16}
+            color="#2e7d32"
+          />
+
+          <Text style={styles.mapText}>
+            Chỉ đường
+          </Text>
         </TouchableOpacity>
       </View>
 
       {/* ACTION */}
       <View style={styles.actions}>
         <TouchableOpacity style={styles.smallBtn}>
-          <Ionicons name="call-outline" size={16} />
-          <Text> Gọi</Text>
+          <Ionicons
+            name="call-outline"
+            size={16}
+            color="#333"
+          />
+
+          <Text style={styles.actionText}>
+            Gọi
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.smallBtn}>
-          <Ionicons name="chatbubble-outline" size={16} />
-          <Text> Nhắn tin</Text>
+          <Ionicons
+            name="chatbubble-outline"
+            size={16}
+            color="#333"
+          />
+
+          <Text style={styles.actionText}>
+            Nhắn tin
+          </Text>
         </TouchableOpacity>
       </View>
 
       {/* BACK HOME */}
       <TouchableOpacity
         style={styles.homeBtn}
-        onPress={() => navigation.navigate("Home")}
+        onPress={handleBackHome}
       >
-        <Text style={styles.homeText}>Về trang chủ</Text>
+        <Text style={styles.homeText}>
+          Về trang chủ
+        </Text>
       </TouchableOpacity>
     </ScrollView>
   );
 }
 
-/* TIMELINE ITEM */
+/* TIMELINE */
 const TimelineItem = ({ text, time, active }) => (
   <View style={styles.timelineItem}>
     <View style={styles.timelineLeft}>
       <View
         style={[
           styles.dot,
-          { backgroundColor: active ? "#2e7d32" : "#ccc" },
+          {
+            backgroundColor: active
+              ? "#2e7d32"
+              : "#ccc",
+          },
         ]}
       />
+
       <View style={styles.line} />
     </View>
 
     <View style={styles.timelineContent}>
-      <Text style={{ fontWeight: active ? "bold" : "normal" }}>{text}</Text>
-      <Text style={styles.gray}>{time}</Text>
+      <Text
+        style={{
+          fontWeight: active ? "700" : "400",
+        }}
+      >
+        {text}
+      </Text>
+
+      <Text style={styles.gray}>
+        {time}
+      </Text>
     </View>
   </View>
 );
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5", paddingTop: 50 },
+  container: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+    paddingTop: 50,
+  },
 
   header: {
     flexDirection: "row",
@@ -167,85 +301,164 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
-  headerTitle: { fontWeight: "bold", fontSize: 16 },
+  headerTitle: {
+    fontWeight: "bold",
+    fontSize: 18,
+  },
 
-  code: { color: "#777" },
+  code: {
+    color: "#777",
+  },
 
   successBox: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#2e7d32",
     margin: 15,
-    padding: 15,
-    borderRadius: 12,
+    padding: 18,
+    borderRadius: 16,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
 
-  successTitle: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  successTitle: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 18,
+  },
 
-  successSub: { color: "#e8f5e9", fontSize: 12 },
+  successSub: {
+    color: "#dcedc8",
+    marginTop: 4,
+  },
 
   box: {
     backgroundColor: "#fff",
     marginHorizontal: 15,
     marginBottom: 15,
     padding: 15,
-    borderRadius: 12,
+    borderRadius: 14,
   },
 
-  title: { fontWeight: "bold", marginBottom: 10 },
+  title: {
+    fontWeight: "bold",
+    fontSize: 15,
+    marginBottom: 12,
+  },
 
-  /* TIMELINE */
-  timelineItem: { flexDirection: "row", marginBottom: 15 },
+  timelineItem: {
+    flexDirection: "row",
+    marginBottom: 15,
+  },
 
-  timelineLeft: { alignItems: "center", marginRight: 10 },
+  timelineLeft: {
+    alignItems: "center",
+    marginRight: 10,
+  },
 
-  dot: { width: 10, height: 10, borderRadius: 5 },
+  dot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
 
-  line: { width: 2, height: 40, backgroundColor: "#ccc", marginTop: 2 },
+  line: {
+    width: 2,
+    height: 42,
+    backgroundColor: "#ccc",
+    marginTop: 2,
+  },
 
-  timelineContent: { flex: 1 },
+  timelineContent: {
+    flex: 1,
+  },
 
-  /* ITEM */
   item: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 14,
   },
 
-  img: { width: 50, height: 50, borderRadius: 8, marginRight: 10 },
+  img: {
+    width: 60,
+    height: 60,
+    borderRadius: 10,
+    marginRight: 10,
+  },
 
-  name: { fontWeight: "bold" },
+  name: {
+    fontWeight: "700",
+    fontSize: 14,
+  },
 
-  gray: { color: "#777", fontSize: 12 },
+  gray: {
+    color: "#777",
+    fontSize: 12,
+    marginTop: 2,
+  },
 
-  price: { color: "#2e7d32", fontWeight: "bold" },
+  price: {
+    color: "#2e7d32",
+    fontWeight: "bold",
+  },
 
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 5,
+    marginTop: 8,
   },
 
-  total: { color: "#2e7d32", fontWeight: "bold" },
+  totalLabel: {
+    fontWeight: "bold",
+    fontSize: 15,
+  },
 
-  bold: { fontWeight: "bold" },
+  totalPrice: {
+    color: "#2e7d32",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+
+  bold: {
+    fontWeight: "bold",
+    fontSize: 14,
+  },
 
   method: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
+    alignItems: "center",
   },
 
-  success: { color: "#2e7d32", fontWeight: "bold" },
+  methodLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  methodText: {
+    marginLeft: 8,
+    fontWeight: "600",
+  },
+
+  success: {
+    color: "#2e7d32",
+    fontWeight: "bold",
+  },
 
   mapBtn: {
     flexDirection: "row",
-    marginTop: 10,
+    alignItems: "center",
+    marginTop: 12,
     backgroundColor: "#e8f5e9",
-    padding: 8,
-    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
     alignSelf: "flex-start",
+  },
+
+  mapText: {
+    marginLeft: 5,
+    color: "#2e7d32",
+    fontWeight: "600",
   },
 
   actions: {
@@ -257,18 +470,29 @@ const styles = StyleSheet.create({
 
   smallBtn: {
     flexDirection: "row",
-    padding: 10,
-    backgroundColor: "#eee",
-    borderRadius: 10,
+    alignItems: "center",
+    backgroundColor: "#fff",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+  },
+
+  actionText: {
+    marginLeft: 6,
+    fontWeight: "600",
   },
 
   homeBtn: {
     backgroundColor: "#2e7d32",
     margin: 15,
-    padding: 15,
-    borderRadius: 25,
+    padding: 16,
+    borderRadius: 30,
     alignItems: "center",
   },
 
-  homeText: { color: "#fff", fontWeight: "bold" },
+  homeText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
 });

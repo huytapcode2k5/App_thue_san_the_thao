@@ -3,7 +3,8 @@ import {
     View, Text, StyleSheet, ScrollView, TouchableOpacity,
     Image, FlatList, TextInput, StatusBar, Animated, Dimensions
 } from 'react-native';
-
+import { useContext } from "react";
+import { CartContext } from "../screens/CartContext";
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2;
 
@@ -44,6 +45,7 @@ const formatPrice = (p) => p.toLocaleString('vi-VN') + '₫';
 function BannerCarousel() {
     const [active, setActive] = useState(0);
     const scrollRef = useRef(null);
+    
 
     return (
         <View style={styles.bannerContainer}>
@@ -140,6 +142,7 @@ function ProductCard({ product, onPress, onAdd }) {
 export default function ShopScreen({ navigation }) {
     const [search, setSearch] = useState('');
     const [selectedCat, setSelectedCat] = useState('0');
+    const { cartItems, addToCart } = useContext(CartContext);
 
     const filtered = PRODUCTS.filter(p => {
         const matchCat = selectedCat === '0' || p.category === selectedCat;
@@ -157,9 +160,18 @@ export default function ShopScreen({ navigation }) {
                     <Text style={styles.headerSub}>Chào mừng đến với</Text>
                     <Text style={styles.headerTitle}>🏪 Cửa Hàng</Text>
                 </View>
-                <TouchableOpacity style={styles.cartBtn}>
+                <TouchableOpacity
+  style={styles.cartBtn}
+  onPress={() =>
+    navigation.navigate("Cart", {
+      screen: "CartScreen"
+    })
+  }
+>
                     <Text style={styles.cartIcon}>🛒</Text>
-                    <View style={styles.cartBadge}><Text style={styles.cartBadgeText}>3</Text></View>
+                    <View style={styles.cartBadge}>
+  <Text style={styles.cartBadgeText}>{cartItems.length}</Text>
+</View>
                 </TouchableOpacity>
             </View>
 
@@ -229,14 +241,9 @@ export default function ShopScreen({ navigation }) {
   key={p.id}
   product={p}
   onPress={(product) => navigation.navigate('ProductDetail', { product })}
-  onAdd={(product) =>
-    navigation.navigate("Cart", {
-      screen: "CartScreen",
-  params: {
-    newItem: product
-  }
-    })
-  }
+  onAdd={(product) => {
+  addToCart(product);
+}}
 />
                         ))}
                     </View>
