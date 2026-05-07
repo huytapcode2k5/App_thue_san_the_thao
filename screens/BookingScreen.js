@@ -1,22 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import {
     View, Text, StyleSheet, ScrollView,
-    TouchableOpacity, Alert, Image
+    TouchableOpacity, Alert, ActivityIndicator
 } from 'react-native';
 import { COLORS } from '../utils/constants';
-import { createBooking, getCurrentUser, getBookedSlots } from '../services/jsonDataService';
+import { createBooking, getCurrentUser } from '../services/jsonDataService';
 import AppButton from '../components/AppButton';
-
-const FIELD_IMAGES = {
-    'bernabeu': require('../assets/bernabeu.jpg'),
-    'old': require('../assets/old.jpg'),
-    'anfield': require('../assets/anfield.jpg'),
-    'etihad': require('../assets/etihad.jpg'),
-};
-
-const SPORT_EMOJI = {
-    'Bóng đá': '⚽', 'Cầu lông': '🏸', 'Tennis': '🎾', 'Bóng rổ': '🏀'
-};
 
 const AMENITY_ICONS = {
     wifi: '📶 WiFi',
@@ -35,6 +24,7 @@ const TIME_SLOTS = [
 
 const HOURS_OPTIONS = [1, 2, 3];
 
+// Tạo danh sách 7 ngày tới
 const getNextDays = () => {
     const days = [];
     const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
@@ -51,51 +41,35 @@ const getNextDays = () => {
 };
 
 export default function BookingScreen({ route, navigation }) {
-    const field = route?.params?.field;
+    const { field } = route.params || {};
+
+    if (!field) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text>Vui lòng chọn sân từ danh sách</Text>
+            </View>
+        );
+    }
     const days = getNextDays();
 
     const [selectedDay, setSelectedDay] = useState(days[0].date);
     const [selectedTime, setSelectedTime] = useState(null);
     const [selectedHours, setSelectedHours] = useState(1);
     const [loading, setLoading] = useState(false);
-    const [bookedSlots, setBookedSlots] = useState([]);
-
-    useEffect(() => {
-        if (field) loadBookedSlots();
-    }, [selectedDay]);
-
-    const loadBookedSlots = async () => {
-        const slots = await getBookedSlots(field.id, selectedDay);
-        setBookedSlots(slots);
-        setSelectedTime(null);
-    };
-
-    if (!field) {
-        return (
-            <View style={styles.emptyContainer}>
-                <Text style={styles.emptyIcon}>📅</Text>
-                <Text style={styles.emptyTitle}>Chưa chọn sân</Text>
-                <Text style={styles.emptySub}>
-                    Vui lòng chọn sân từ trang chủ hoặc danh sách sân để đặt lịch.
-                </Text>
-                <TouchableOpacity
-                    style={styles.goHomeBtn}
-                    onPress={() => navigation.navigate('TabNavigator')}
-                >
-                    <Text style={styles.goHomeBtnText}>🏠 Về Trang Chủ</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    }
 
     const totalPrice = field.price * selectedHours;
-    const imageSource = FIELD_IMAGES[field.image];
 
     const handleBooking = async () => {
         if (!selectedTime) {
             Alert.alert('Thông báo', 'Vui lòng chọn giờ bắt đầu!');
             return;
         }
+
+        if (!field.available) {
+            Alert.alert('Thông báo', 'Sân này hiện không có sẵn!');
+            return;
+        }
+
         setLoading(true);
         try {
             const user = await getCurrentUser();
@@ -103,6 +77,7 @@ export default function BookingScreen({ route, navigation }) {
                 Alert.alert('Thông báo', 'Vui lòng đăng nhập để đặt sân!');
                 return;
             }
+
             const result = await createBooking({
                 userId: user.id,
                 fieldId: field.id,
@@ -113,11 +88,12 @@ export default function BookingScreen({ route, navigation }) {
                 hours: selectedHours,
                 totalPrice,
             });
+
             if (result.success) {
                 Alert.alert(
                     '🎉 Đặt sân thành công!',
                     `Sân: ${field.name}\nNgày: ${selectedDay}\nGiờ: ${selectedTime}\nSố giờ: ${selectedHours}h\nTổng tiền: ${totalPrice.toLocaleString('vi-VN')}đ`,
-                    [{ text: 'OK', onPress: () => { loadBookedSlots(); navigation.goBack(); } }]
+                    [{ text: 'OK', onPress: () => navigation.goBack() }]
                 );
             } else {
                 Alert.alert('Lỗi', result.error || 'Đặt sân thất bại, thử lại!');
@@ -131,47 +107,44 @@ export default function BookingScreen({ route, navigation }) {
 
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-
-            {/* ẢNH SÂN — tự động lấy từ field.image */}
+            {/* THÔNG TIN SÂN */}
             <View style={styles.fieldCard}>
-                <View style={styles.fieldImageBox}>
-                    {imageSource ? (
-                        <Image
-                            source={imageSource}
-                            style={styles.fieldImage}
-                            resizeMode="cover"
-                        />
-                    ) : (
-                        <View style={styles.fieldImagePlaceholder}>
-                            <Text style={{ fontSize: 52 }}>{SPORT_EMOJI[field.sport] || '🏟️'}</Text>
-                        </View>
-                    )}
-                    {/* Badge tên sân đè lên ảnh */}
-                    <View style={styles.fieldImageOverlay}>
-                        <Text style={styles.fieldImageName} numberOfLines={1}>{field.name}</Text>
-                        <Text style={styles.fieldImageLocation}>📍 {field.location}</Text>
-                    </View>
+                <View style={styles.fieldImagePlaceholder}>
+                    <Text style={{ fontSize: 52 }}>
+                        {field.sport === 'Bóng đá' ? '⚽' :
+                            field.sport === 'Cầu lông' ? '🏸' :
+                                field.sport === 'Tennis' ? '🎾' :
+                                    field.sport === 'Bóng rổ' ? '🏀' : '🏟️'}
+                    </Text>
                 </View>
-
                 <View style={styles.fieldInfo}>
                     <View style={styles.fieldTopRow}>
-                        <View style={styles.ratingRow}>
-                            <Text style={styles.rating}>⭐ {field.rating}</Text>
-                            <Text style={styles.sport}>🏅 {field.sport}</Text>
-                        </View>
-                        <View style={styles.availableBadge}>
-                            <Text style={styles.availableBadgeText}>✓ Còn slot</Text>
+                        <Text style={styles.fieldName}>{field.name}</Text>
+                        <View style={[
+                            styles.availableBadge,
+                            { backgroundColor: field.available ? '#e8f8f0' : '#fde8e8' }
+                        ]}>
+                            <Text style={{
+                                fontSize: 11, fontWeight: '700',
+                                color: field.available ? COLORS.primary : COLORS.danger
+                            }}>
+                                {field.available ? '✓ Còn sân' : '✗ Hết sân'}
+                            </Text>
                         </View>
                     </View>
-                    {field.amenities && field.amenities.length > 0 && (
-                        <View style={styles.amenitiesRow}>
-                            {field.amenities.map(a => (
-                                <View key={a} style={styles.amenityChip}>
-                                    <Text style={styles.amenityText}>{AMENITY_ICONS[a] || a}</Text>
-                                </View>
-                            ))}
-                        </View>
-                    )}
+                    <Text style={styles.fieldLocation}>📍 {field.address}, {field.location}</Text>
+                    <View style={styles.ratingRow}>
+                        <Text style={styles.rating}>⭐ {field.rating}</Text>
+                        <Text style={styles.sport}>🏅 {field.sport}</Text>
+                    </View>
+                    {/* Tiện ích */}
+                    <View style={styles.amenitiesRow}>
+                        {field.amenities?.map(a => (
+                            <View key={a} style={styles.amenityChip}>
+                                <Text style={styles.amenityText}>{AMENITY_ICONS[a] || a}</Text>
+                            </View>
+                        ))}
+                    </View>
                 </View>
             </View>
 
@@ -199,42 +172,18 @@ export default function BookingScreen({ route, navigation }) {
             {/* CHỌN GIỜ */}
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>🕐 Chọn giờ bắt đầu</Text>
-                <View style={styles.legend}>
-                    <View style={styles.legendItem}>
-                        <View style={[styles.legendDot, { backgroundColor: COLORS.primary }]} />
-                        <Text style={styles.legendText}>Còn trống</Text>
-                    </View>
-                    <View style={styles.legendItem}>
-                        <View style={[styles.legendDot, { backgroundColor: '#ddd' }]} />
-                        <Text style={styles.legendText}>Đã đặt</Text>
-                    </View>
-                </View>
                 <View style={styles.timeGrid}>
-                    {TIME_SLOTS.map(time => {
-                        const isBooked = bookedSlots.includes(time);
-                        const isSelected = selectedTime === time;
-                        return (
-                            <TouchableOpacity
-                                key={time}
-                                style={[
-                                    styles.timeChip,
-                                    isSelected && styles.timeChipActive,
-                                    isBooked && styles.timeChipBooked,
-                                ]}
-                                onPress={() => !isBooked && setSelectedTime(time)}
-                                disabled={isBooked}
-                            >
-                                <Text style={[
-                                    styles.timeText,
-                                    isSelected && styles.timeTextActive,
-                                    isBooked && styles.timeTextBooked,
-                                ]}>
-                                    {time}
-                                </Text>
-                                {isBooked && <Text style={styles.bookedLabel}>Đã đặt</Text>}
-                            </TouchableOpacity>
-                        );
-                    })}
+                    {TIME_SLOTS.map(time => (
+                        <TouchableOpacity
+                            key={time}
+                            style={[styles.timeChip, selectedTime === time && styles.timeChipActive]}
+                            onPress={() => setSelectedTime(time)}
+                        >
+                            <Text style={[styles.timeText, selectedTime === time && styles.timeTextActive]}>
+                                {time}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
                 </View>
             </View>
 
@@ -286,9 +235,14 @@ export default function BookingScreen({ route, navigation }) {
                     title={loading ? 'Đang xử lý...' : `Xác nhận đặt sân • ${totalPrice.toLocaleString('vi-VN')}đ`}
                     onPress={handleBooking}
                     loading={loading}
-                    disabled={loading || !selectedTime}
+                    disabled={!field.available}
                     size="lg"
                 />
+                {!field.available && (
+                    <Text style={styles.unavailableNote}>
+                        ⚠️ Sân này hiện không có sẵn để đặt
+                    </Text>
+                )}
             </View>
 
             <View style={{ height: 30 }} />
@@ -299,84 +253,57 @@ export default function BookingScreen({ route, navigation }) {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f5f5f5' },
 
-    emptyContainer: {
-        flex: 1, justifyContent: 'center', alignItems: 'center',
-        backgroundColor: '#f5f5f5', padding: 32,
-    },
-    emptyIcon: { fontSize: 72, marginBottom: 16 },
-    emptyTitle: { fontSize: 22, fontWeight: '800', color: '#1a1a1a', marginBottom: 10 },
-    emptySub: {
-        fontSize: 14, color: '#888', textAlign: 'center',
-        lineHeight: 22, marginBottom: 28,
-    },
-    goHomeBtn: {
-        backgroundColor: COLORS.primary, paddingHorizontal: 28,
-        paddingVertical: 14, borderRadius: 25,
-    },
-    goHomeBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
-
     // Field card
-    fieldCard: { backgroundColor: '#fff', marginBottom: 8 },
-    fieldImageBox: { position: 'relative' },
-    fieldImage: { width: '100%', height: 200 },
+    fieldCard: {
+        backgroundColor: COLORS.white,
+        marginBottom: 8,
+    },
     fieldImagePlaceholder: {
-        height: 200, backgroundColor: '#e8f8f0',
+        height: 180, backgroundColor: '#e8f8f0',
         justifyContent: 'center', alignItems: 'center',
     },
-    fieldImageOverlay: {
-        position: 'absolute', bottom: 0, left: 0, right: 0,
-        backgroundColor: 'rgba(0,0,0,0.45)',
-        paddingHorizontal: 16, paddingVertical: 12,
-    },
-    fieldImageName: { color: '#fff', fontSize: 18, fontWeight: '900', marginBottom: 2 },
-    fieldImageLocation: { color: 'rgba(255,255,255,0.8)', fontSize: 12 },
-
-    fieldInfo: { padding: 14 },
-    fieldTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-    ratingRow: { flexDirection: 'row', gap: 14 },
-    rating: { fontSize: 14, fontWeight: '600', color: '#1a1a1a' },
-    sport: { fontSize: 14, color: '#888' },
-    availableBadge: {
-        backgroundColor: '#e8f8f0', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12,
-    },
-    availableBadgeText: { fontSize: 11, fontWeight: '700', color: COLORS.primary },
-    amenitiesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+    fieldInfo: { padding: 16 },
+    fieldTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+    fieldName: { fontSize: 18, fontWeight: '800', color: COLORS.black, flex: 1, marginRight: 8 },
+    availableBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+    fieldLocation: { fontSize: 13, color: COLORS.gray, marginTop: 6 },
+    ratingRow: { flexDirection: 'row', gap: 16, marginTop: 8 },
+    rating: { fontSize: 14, fontWeight: '600', color: COLORS.black },
+    sport: { fontSize: 14, color: COLORS.gray },
+    amenitiesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
     amenityChip: {
         backgroundColor: '#e8f8f0', paddingHorizontal: 10,
         paddingVertical: 4, borderRadius: 10,
     },
     amenityText: { fontSize: 12, color: COLORS.primaryDark, fontWeight: '500' },
 
-    section: { backgroundColor: '#fff', marginBottom: 8, padding: 16 },
-    sectionTitle: { fontSize: 15, fontWeight: '700', color: '#1a1a1a', marginBottom: 12 },
+    // Section
+    section: { backgroundColor: COLORS.white, marginBottom: 8, padding: 16 },
+    sectionTitle: { fontSize: 15, fontWeight: '700', color: COLORS.black, marginBottom: 12 },
 
-    legend: { flexDirection: 'row', gap: 16, marginBottom: 12 },
-    legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    legendDot: { width: 10, height: 10, borderRadius: 5 },
-    legendText: { fontSize: 12, color: '#888' },
-
+    // Day picker
     dayChip: {
         alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10,
-        borderRadius: 12, backgroundColor: '#f0f0f0', marginRight: 8, minWidth: 60,
+        borderRadius: 12, backgroundColor: '#f0f0f0', marginRight: 8,
+        minWidth: 60,
     },
     dayChipActive: { backgroundColor: COLORS.primary },
-    dayLabel: { fontSize: 11, color: '#888', fontWeight: '500' },
-    dayNumber: { fontSize: 18, fontWeight: '700', color: '#1a1a1a', marginTop: 2 },
-    dayTextActive: { color: '#fff' },
+    dayLabel: { fontSize: 11, color: COLORS.gray, fontWeight: '500' },
+    dayNumber: { fontSize: 18, fontWeight: '700', color: COLORS.black, marginTop: 2 },
+    dayTextActive: { color: COLORS.white },
 
+    // Time grid
     timeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     timeChip: {
         paddingHorizontal: 14, paddingVertical: 10,
         borderRadius: 10, backgroundColor: '#f0f0f0',
-        borderWidth: 1, borderColor: '#e0e0e0', alignItems: 'center',
+        borderWidth: 1, borderColor: '#e0e0e0',
     },
     timeChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-    timeChipBooked: { backgroundColor: '#f5f5f5', borderColor: '#e0e0e0', opacity: 0.6 },
-    timeText: { fontSize: 13, fontWeight: '600', color: '#1a1a1a' },
-    timeTextActive: { color: '#fff' },
-    timeTextBooked: { color: '#bbb' },
-    bookedLabel: { fontSize: 9, color: '#bbb', marginTop: 2 },
+    timeText: { fontSize: 13, fontWeight: '600', color: COLORS.black },
+    timeTextActive: { color: COLORS.white },
 
+    // Hours
     hoursRow: { flexDirection: 'row', gap: 10 },
     hoursChip: {
         flex: 1, paddingVertical: 14, borderRadius: 12,
@@ -384,22 +311,25 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: '#e0e0e0',
     },
     hoursChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-    hoursText: { fontSize: 15, fontWeight: '700', color: '#1a1a1a' },
-    hoursTextActive: { color: '#fff' },
+    hoursText: { fontSize: 15, fontWeight: '700', color: COLORS.black },
+    hoursTextActive: { color: COLORS.white },
 
+    // Summary
     summaryCard: {
-        backgroundColor: '#fff', margin: 16,
-        borderRadius: 16, padding: 16, elevation: 2,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06, shadowRadius: 4,
+        backgroundColor: COLORS.white, margin: 16,
+        borderRadius: 16, padding: 16,
+        elevation: 2, shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4,
     },
-    summaryTitle: { fontSize: 15, fontWeight: '700', color: '#1a1a1a', marginBottom: 12 },
+    summaryTitle: { fontSize: 15, fontWeight: '700', color: COLORS.black, marginBottom: 12 },
     summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-    summaryLabel: { fontSize: 14, color: '#888' },
-    summaryValue: { fontSize: 14, fontWeight: '600', color: '#1a1a1a' },
+    summaryLabel: { fontSize: 14, color: COLORS.gray },
+    summaryValue: { fontSize: 14, fontWeight: '600', color: COLORS.black },
     divider: { height: 1, backgroundColor: '#eee', marginVertical: 8 },
-    totalLabel: { fontSize: 16, fontWeight: '700', color: '#1a1a1a' },
+    totalLabel: { fontSize: 16, fontWeight: '700', color: COLORS.black },
     totalValue: { fontSize: 18, fontWeight: '800', color: COLORS.primary },
 
+    // Button
     bookingBtn: { paddingHorizontal: 16 },
+    unavailableNote: { textAlign: 'center', color: COLORS.danger, fontSize: 13, marginTop: 8 },
 });
