@@ -1,60 +1,79 @@
-// navigation/MainStack.js
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, Text } from 'react-native';
+import { Text } from 'react-native';
 
 import HomeScreen from '../screens/HomeScreen';
 import FieldScreen from '../screens/FieldScreen';
 import BookingScreen from '../screens/BookingScreen';
 import CartScreen from '../screens/CartScreen';
+<<<<<<< HEAD
 import ProfileScreen from '../screens/ProfileScreen';
 import ShopScreen from '../screens/ShopScreen';
 import ProductDetailScreen from '../screens/ProductDetailScreen';
 import PaymentScreen from '../screens/PaymentScreen';
 import PaymentConfirmScreen from '../screens/PaymentConfirmScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
+=======
+import HistoryScreen from '../screens/HistoryScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+import FieldDetailScreen from '../screens/FieldDetailScreen';
+
+>>>>>>> main
 const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
+const RootStack = createNativeStackNavigator();
+const HomeStackNav = createNativeStackNavigator();
+const BookingStackNav = createNativeStackNavigator();
+const CartStackNav = createNativeStackNavigator();
+const ProfileStackNav = createNativeStackNavigator();
 
-const PRIMARY = '#4CAF50';
-
-// Placeholder History
-function HistoryScreen() {
-    return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0faf0' }}>
-            <Text style={{ fontSize: 48, marginBottom: 12 }}>🕓</Text>
-            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#2E7D32', marginBottom: 8 }}>Lịch sử</Text>
-            <Text style={{ fontSize: 14, color: '#888' }}>Màn hình đang được phát triển</Text>
-        </View>
-    );
-}
+const PRIMARY = '#2ede5a';
 
 function HomeStack() {
     return (
-        <Stack.Navigator>
-            <Stack.Screen name="HomeScreen" component={HomeScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="Field" component={FieldScreen} options={{ title: 'Danh sách sân' }} />
-        </Stack.Navigator>
+        <HomeStackNav.Navigator>
+            <HomeStackNav.Screen
+                name="HomeScreen"
+                component={HomeScreen}
+                options={{ headerShown: false }}
+            />
+            <HomeStackNav.Screen
+                name="FieldList"
+                component={FieldScreen}
+                options={{ title: 'Danh sách sân' }}
+                initialParams={{ detailRoute: 'FieldDetail' }}
+            />
+        </HomeStackNav.Navigator>
     );
 }
 
-function BookingStack() {
+function BookingTabStack() {
     return (
-        <Stack.Navigator>
-            <Stack.Screen name="BookingScreen" component={BookingScreen} options={{ headerShown: false }} />
-        </Stack.Navigator>
+        <BookingStackNav.Navigator>
+            <BookingStackNav.Screen
+                name="FieldListTab"
+                component={FieldScreen}
+                options={{ title: 'Đặt sân' }}
+                initialParams={{ detailRoute: 'FieldDetail' }}
+            />
+        </BookingStackNav.Navigator>
     );
 }
 
 function CartStack() {
     return (
+<<<<<<< HEAD
         <Stack.Navigator>
             <Stack.Screen
+=======
+        <CartStackNav.Navigator>
+            <CartStackNav.Screen
+>>>>>>> main
                 name="CartScreen"
                 component={CartScreen}
                 options={{ headerShown: false }}
             />
+<<<<<<< HEAD
 
             {/* 👇 THÊM 2 MÀN HÌNH */}
             <Stack.Screen
@@ -69,11 +88,15 @@ function CartStack() {
                 options={{ headerShown: false }}
             />
         </Stack.Navigator>
+=======
+        </CartStackNav.Navigator>
+>>>>>>> main
     );
 }
 
 function ProfileStack() {
     return (
+<<<<<<< HEAD
         <Stack.Navigator>
             <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: false }} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: false }} />
@@ -105,6 +128,15 @@ function ShopStack() {
                 }}
             />
         </Stack.Navigator>
+=======
+        <ProfileStackNav.Navigator>
+            <ProfileStackNav.Screen
+                name="ProfileScreen"
+                component={ProfileScreen}
+                options={{ headerShown: false }}
+            />
+        </ProfileStackNav.Navigator>
+>>>>>>> main
     );
 }
 
@@ -126,7 +158,7 @@ const TAB_LABELS = {
     Profile: 'Cá nhân',
 };
 
-export default function MainStack() {
+function TabNavigator() {
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
@@ -154,11 +186,41 @@ export default function MainStack() {
             })}
         >
             <Tab.Screen name="Home" component={HomeStack} />
+<<<<<<< HEAD
             <Tab.Screen name="Booking" component={BookingStack} />
             <Tab.Screen name="Shop" component={ShopStack} />
+=======
+            <Tab.Screen name="Booking" component={BookingTabStack} />
+>>>>>>> main
             <Tab.Screen name="Cart" component={CartStack} />
             <Tab.Screen name="History" component={HistoryScreen} />
             <Tab.Screen name="Profile" component={ProfileStack} />
         </Tab.Navigator>
     );
 }
+<<<<<<< HEAD
+=======
+
+
+export default function MainStack() {
+    return (
+        <RootStack.Navigator screenOptions={{ headerShown: false }}>
+            <RootStack.Screen name="TabNavigator" component={TabNavigator} />
+            <RootStack.Screen
+                name="FieldDetail"
+                component={FieldDetailScreen}
+                options={{ headerShown: false }}
+            />
+            <RootStack.Screen
+                name="Booking"
+                component={BookingScreen}
+                options={{
+                    headerShown: true,
+                    title: 'Đặt sân',
+                    headerBackTitle: 'Quay lại'
+                }}
+            />
+        </RootStack.Navigator>
+    );
+}
+>>>>>>> main
