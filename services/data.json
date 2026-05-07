@@ -31,7 +31,7 @@
             "price": 280000,
             "location": "Quận 11, TP.HCM",
             "address": "789 Đường Phú Thọ, Quận 11",
-            "available": false,
+            "available": true,
             "rating": 4.5,
             "image": "bernabeu",
             "amenities": ["parking", "shower"]
@@ -79,7 +79,7 @@
             "price": 120000,
             "location": "Quận 5, TP.HCM",
             "address": "789 Đường Tinh Nhuệ, Quận 5",
-            "available": false,
+            "available": true,
             "rating": 4.4,
             "image": "old",
             "amenities": ["parking"]
@@ -113,7 +113,7 @@
             "name": "Pro Tennis Center",
             "sport": "Tennis",
             "price": 450000,
-            "location": "Quận Bình Thạnh, TP.HCM",
+            "location": "Bình Thạnh, TP.HCM",
             "address": "123 Đường Pro, Bình Thạnh",
             "available": true,
             "rating": 4.8,
@@ -127,7 +127,7 @@
             "price": 380000,
             "location": "Quận 9, TP.HCM",
             "address": "789 Đường Ký Hiệu, Quận 9",
-            "available": false,
+            "available": true,
             "rating": 4.5,
             "image": "anfield",
             "amenities": ["parking", "shower"]
@@ -151,7 +151,7 @@
             "price": 200000,
             "location": "Quận 5, TP.HCM",
             "address": "789 Đường DEF, Quận 5",
-            "available": false,
+            "available": true,
             "rating": 4.9,
             "image": "etihad",
             "amenities": ["wifi", "parking", "air_conditioner"]
@@ -197,11 +197,12 @@
         {
             "id": "booking1",
             "userId": "user1",
-            "fieldId": "13",
-            "fieldName": "Sân bóng rổ Trần Hưng Đạo",
+            "fieldId": "1",
+            "fieldName": "Sân bóng đá Ánh Dương",
             "date": "2026-05-05",
+            "time": "08:00",
             "hours": 2,
-            "totalPrice": 400000,
+            "totalPrice": 600000,
             "status": "confirmed",
             "createdAt": "2026-05-01T10:00:00Z"
         }

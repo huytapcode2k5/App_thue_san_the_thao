@@ -1,10 +1,13 @@
 export const COLORS = {
     primary: '#2ede5a',
-    primaryDark: '#2ede5a', // Thêm dòng này
-    white: '#fff',
-    danger: '#e74c3c',
-    gray: '#95a5a6',
-    lightGray: '#ecf0f1'
+    primaryDark: '#1ab844',
+    secondary: '#111111',
+    white: '#ffffff',
+    black: '#111111',
+    gray: '#888888',
+    lightGray: '#f4f6f8',
+    danger: '#ef4444',
+    warning: '#f59e0b',
 };
 
 export const API_URL = 'https://your-api-url.com';

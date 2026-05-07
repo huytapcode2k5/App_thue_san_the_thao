@@ -28,6 +28,9 @@ export default function FieldListScreen({ route, navigation }) {
     const [selectedSport, setSelectedSport] = useState(route.params?.sport || 'Tất cả');
     const [loading, setLoading] = useState(true);
 
+    // Lấy tên route chi tiết từ params (khác nhau tùy stack)
+    const detailRoute = route.params?.detailRoute || 'FieldDetail';
+
     useEffect(() => {
         loadFields();
     }, []);
@@ -110,7 +113,7 @@ export default function FieldListScreen({ route, navigation }) {
                     <TouchableOpacity
                         style={styles.fieldCard}
                         activeOpacity={0.92}
-                        onPress={() => navigation.navigate('Booking', { field })}
+                        onPress={() => navigation.navigate(detailRoute, { field })}
                     >
                         {/* ẢNH */}
                         <View style={styles.imageBox}>
@@ -125,11 +128,9 @@ export default function FieldListScreen({ route, navigation }) {
                                     <Text style={{ fontSize: 48 }}>🏟️</Text>
                                 </View>
                             )}
-                            {/* Badge môn */}
                             <View style={[styles.sportBadge, { backgroundColor: SPORT_COLORS[field.sport] || COLORS.primary }]}>
                                 <Text style={styles.sportBadgeText}>{field.sport}</Text>
                             </View>
-                            {/* Badge available */}
                             <View style={[styles.availBadge, { backgroundColor: field.available ? '#27ae60' : '#e74c3c' }]}>
                                 <Text style={styles.availBadgeText}>
                                     {field.available ? '● Còn sân' : '● Hết sân'}
@@ -155,13 +156,10 @@ export default function FieldListScreen({ route, navigation }) {
                                     </Text>
                                 </View>
                                 <TouchableOpacity
-                                    style={[styles.bookBtn, !field.available && styles.bookBtnDisabled]}
-                                    onPress={() => navigation.navigate('Booking', { field })}
-                                    disabled={!field.available}
+                                    style={styles.bookBtn}
+                                    onPress={() => navigation.navigate(detailRoute, { field })}
                                 >
-                                    <Text style={styles.bookBtnText}>
-                                        {field.available ? '📅 Đặt ngay' : 'Hết sân'}
-                                    </Text>
+                                    <Text style={styles.bookBtnText}>🔍 Xem chi tiết</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -176,7 +174,6 @@ const styles = StyleSheet.create({
     wrapper: { flex: 1, backgroundColor: '#f4f6f8' },
     loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
-    // Filter
     filterWrapper: {
         backgroundColor: '#fff',
         paddingVertical: 10,
@@ -194,10 +191,8 @@ const styles = StyleSheet.create({
     filterText: { fontSize: 13, color: '#888', fontWeight: '600' },
     filterTextActive: { color: '#fff' },
 
-    // List
     listContainer: { padding: 16, gap: 14 },
 
-    // Card
     fieldCard: {
         backgroundColor: '#fff', borderRadius: 18, overflow: 'hidden',
         elevation: 3, shadowColor: '#000',
@@ -205,9 +200,7 @@ const styles = StyleSheet.create({
     },
     imageBox: { position: 'relative' },
     fieldImage: { width: '100%', height: 160 },
-    imagePlaceholder: {
-        height: 160, justifyContent: 'center', alignItems: 'center',
-    },
+    imagePlaceholder: { height: 160, justifyContent: 'center', alignItems: 'center' },
     sportBadge: {
         position: 'absolute', top: 12, left: 12,
         paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20,
@@ -219,7 +212,6 @@ const styles = StyleSheet.create({
     },
     availBadgeText: { color: '#fff', fontSize: 11, fontWeight: '600' },
 
-    // Body
     fieldBody: { padding: 14 },
     fieldTopRow: {
         flexDirection: 'row', justifyContent: 'space-between',
@@ -237,10 +229,8 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.primary, paddingHorizontal: 16,
         paddingVertical: 10, borderRadius: 12,
     },
-    bookBtnDisabled: { backgroundColor: '#ccc' },
     bookBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
 
-    // Empty
     emptyContainer: { alignItems: 'center', paddingVertical: 60 },
     emptyText: { color: '#aaa', fontSize: 15, marginTop: 12, fontWeight: '500' },
 });

@@ -1,4 +1,3 @@
-// services/jsonDataService.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import initialData from './data.json';
 
@@ -9,32 +8,27 @@ const STORAGE_KEYS = {
     CURRENT_USER: '@sport_current_user'
 };
 
-// ── Helper: ép kiểu an toàn ──────────────────────────────────────
-// Tránh lỗi "String cannot be cast to Boolean/Integer"
-const toStr = (v) => String(v);                          // id luôn là string
-const toBool = (v) => v === true || v === 'true';         // available luôn boolean
-const toNum = (v) => Number(v) || 0;                     // price, rating luôn number
+const toStr = (v) => String(v);
+const toBool = (v) => v === true || v === 'true';
+const toNum = (v) => Number(v) || 0;
 
-// Chuẩn hoá 1 field object từ JSON
 const normalizeField = (f) => ({
     ...f,
     id: toStr(f.id),
     price: toNum(f.price),
     rating: toNum(f.rating),
-    available: toBool(f.available),   // ✅ fix "String cannot be cast to Boolean"
+    available: toBool(f.available),
 });
 
-// Chuẩn hoá 1 user object
 const normalizeUser = (u) => ({
     ...u,
     id: toStr(u.id),
 });
 
-// Chuẩn hoá 1 booking object
 const normalizeBooking = (b) => ({
     ...b,
     id: toStr(b.id),
-    fieldId: toStr(b.fieldId),     // ✅ đảm bảo luôn là string khi so sánh
+    fieldId: toStr(b.fieldId),
     userId: toStr(b.userId),
     totalPrice: toNum(b.totalPrice),
     hours: toNum(b.hours),
@@ -70,7 +64,7 @@ export const getFields = async () => {
     try {
         const data = await AsyncStorage.getItem(STORAGE_KEYS.FIELDS);
         const parsed = data ? JSON.parse(data) : [];
-        return parsed.map(normalizeField); // ✅ chuẩn hoá khi đọc ra
+        return parsed.map(normalizeField);
     } catch (error) {
         console.error('Lỗi lấy fields:', error);
         return [];
@@ -99,16 +93,6 @@ export const addField = async (newField) => {
     }
 };
 
-// Cập nhật available của sân
-const updateFieldAvailability = async (fieldId, available) => {
-    const fields = await getFields();
-    const index = fields.findIndex(f => f.id === toStr(fieldId)); // ✅ so sánh string
-    if (index !== -1) {
-        fields[index].available = toBool(available); // ✅ luôn lưu boolean
-        await AsyncStorage.setItem(STORAGE_KEYS.FIELDS, JSON.stringify(fields));
-    }
-};
-
 // ── BOOKING SERVICES ─────────────────────────────────────────────
 export const getBookings = async () => {
     try {
@@ -123,21 +107,52 @@ export const getBookings = async () => {
 
 export const getUserBookings = async (userId) => {
     const bookings = await getBookings();
-    return bookings.filter(b => b.userId === toStr(userId)); // ✅ so sánh string
+    return bookings.filter(b => b.userId === toStr(userId));
+};
+
+// Lấy các slot đã bị đặt của 1 sân trong 1 ngày cụ thể
+export const getBookedSlots = async (fieldId, date) => {
+    try {
+        const bookings = await getBookings();
+        return bookings
+            .filter(b =>
+                b.fieldId === toStr(fieldId) &&
+                b.date === date &&
+                b.status !== 'cancelled'
+            )
+            .map(b => b.time);
+    } catch (error) {
+        return [];
+    }
 };
 
 export const createBooking = async (bookingData) => {
     try {
         const bookings = await getBookings();
+
+        // Kiểm tra slot (ngày + giờ) đã có người đặt chưa
+        const conflict = bookings.find(b =>
+            b.fieldId === toStr(bookingData.fieldId) &&
+            b.date === bookingData.date &&
+            b.time === bookingData.time &&
+            b.status !== 'cancelled'
+        );
+
+        if (conflict) {
+            return { success: false, error: 'Khung giờ này đã có người đặt, vui lòng chọn giờ khác!' };
+        }
+
         const newBooking = normalizeBooking({
             id: Date.now().toString(),
             ...bookingData,
             status: 'pending',
             createdAt: new Date().toISOString(),
         });
+
         bookings.push(newBooking);
         await AsyncStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(bookings));
-        await updateFieldAvailability(bookingData.fieldId, false);
+
+        // KHÔNG đánh dấu hết sân nữa — chỉ khóa đúng slot đó
         return { success: true, booking: newBooking };
     } catch (error) {
         return { success: false, error: error.message };
