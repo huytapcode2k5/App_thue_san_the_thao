@@ -3,7 +3,7 @@ import {
     View, Text, StyleSheet, ScrollView,
     TouchableOpacity, ActivityIndicator,
     StatusBar, Image, TextInput,
-    Animated, Dimensions, Modal
+    Animated, Dimensions, Modal, Alert,
 } from 'react-native';
 import { COLORS } from '../utils/constants';
 import { getFields } from '../services/jsonDataService';
@@ -107,9 +107,9 @@ export default function HomeScreen({ navigation }) {
     };
 
     const goToDetail = (field) => {
-    navigation.getParent('HomeStack')?.navigate('FieldDetail', { field }) 
-    ?? navigation.navigate('FieldDetail', { field });
-};
+        navigation.getParent('HomeStack')?.navigate('FieldDetail', { field })
+            ?? navigation.navigate('FieldDetail', { field });
+    };
 
     const openFilter = () => {
         setShowFilter(true);
@@ -148,9 +148,11 @@ export default function HomeScreen({ navigation }) {
                         <Text style={styles.headerGreet}>Xin chào 👋</Text>
                         <Text style={styles.headerTitle}>Đặt Sân Thể Thao</Text>
                     </View>
-                    <TouchableOpacity style={styles.notifBtn}>
+                    <TouchableOpacity
+                        style={styles.notifBtn}
+                        onPress={() => Alert.alert('Thông báo', 'Chưa có thông báo mới!')}
+                    >
                         <Text style={styles.notifIcon}>🔔</Text>
-                        <View style={styles.notifDot} />
                     </TouchableOpacity>
                 </View>
 
@@ -563,7 +565,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row', justifyContent: 'space-between',
         alignItems: 'flex-start', paddingHorizontal: 20, marginBottom: 14,
     },
-    headerGreet: { fontSize: 13, color: '#aaa', fontWeight: '500', marginBottom: 2 },
+    headerGreet: { fontSize: 20, color: '#000000', fontWeight: '500', marginBottom: 2 },
     headerTitle: { fontSize: 24, fontWeight: '900', color: '#111', letterSpacing: -0.5 },
     notifBtn: { width: 42, height: 42, borderRadius: 14, backgroundColor: '#f4f6f8', justifyContent: 'center', alignItems: 'center' },
     notifIcon: { fontSize: 20 },

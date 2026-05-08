@@ -1,157 +1,140 @@
-import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-} from "react-native";
+// screens/PaymentConfirmScreen.js
+import React, { useContext } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import { HistoryContext } from "../screens/HistoryContext";
+import { CartContext } from "../screens/CartContext";
+import { PRODUCT_IMAGES } from "../services/productsData";
+import { FIELD_IMAGES, getFieldImage } from "../services/fieldImages"; // ✅ dùng chung
 
-const images = {
-  SanCauLong: require("../assets/SanCauLong.png"),
-  SanBongDa: require("../assets/SanBongDa5Ng.png"),
-  SanTennis: require("../assets/SanTennis.png"),
+const FIELD_IMAGE_KEYS = Object.keys(FIELD_IMAGES);
+
+// ✅ Xác định type chính xác
+const getType = (item) => {
+  if (item.type === "field" || item.type === "product") return item.type;
+  if (item.time) return "field";
+  if (item.size !== undefined && item.size !== null) return "product";
+  if (FIELD_IMAGE_KEYS.includes(item.image)) return "field";
+  return "product";
 };
 
-export default function PaymentConfirmScreen({ navigation, route }) {
-  const items = route.params?.items || [];
+// ✅ Lấy ảnh đúng theo type
+const getImage = (key, type) => {
+  if (type === "field") return getFieldImage(key);
+  return PRODUCT_IMAGES[key] || getFieldImage(key);
+};
 
+const orderCode = Math.floor(Math.random() * 99999);
+
+export default function PaymentConfirmScreen({ route }) {
+  const navigation = useNavigation();
+  const { addOrder } = useContext(HistoryContext);
+  const { clearCart } = useContext(CartContext);
+
+  const rawItems = route.params?.items || [];
+  const paymentMethod = route.params?.paymentMethod || "MoMo";
   const fee = 15000;
-
-  const subtotal = items.reduce(
-    (s, i) => s + i.price * i.quantity,
-    0
-  );
-
+  const subtotal = rawItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const total = subtotal + fee;
+
+  // ✅ Gắn type đúng vào từng item trước khi lưu/hiển thị
+  const items = rawItems.map(item => ({
+    ...item,
+    type: getType(item),
+    image: item.image || "bernabeu",
+    time: item.time || "",
+  }));
+
+  const handleBackHome = () => {
+    addOrder({
+      id: Date.now(),
+      code: orderCode,
+      date: new Date().toLocaleDateString(),
+      items,
+      total,
+      method: paymentMethod,
+      status: "ĐÃ THANH TOÁN",
+    });
+    clearCart();
+    navigation.reset({ index: 0, routes: [{ name: "Home" }] });
+  };
 
   return (
     <ScrollView style={styles.container}>
-      {/* HEADER */}
       <View style={styles.header}>
-        <Ionicons name="arrow-back" size={22} onPress={() => navigation.goBack()} />
         <Text style={styles.headerTitle}>Chi tiết đơn hàng</Text>
-        <Text style={styles.code}>#{Math.floor(Math.random() * 99999)}</Text>
+        <Text style={styles.code}>#{orderCode}</Text>
       </View>
 
-      {/* SUCCESS BOX */}
       <View style={styles.successBox}>
         <View>
           <Text style={styles.successTitle}>ĐÃ XÁC NHẬN</Text>
-          <Text style={styles.successSub}>Sân đã sẵn sàng cho bạn lúc 18:00</Text>
+          <Text style={styles.successSub}>Thanh toán thành công</Text>
         </View>
-        <Ionicons name="checkmark-circle" size={30} color="#fff" />
+        <Ionicons name="checkmark-circle" size={34} color="#fff" />
       </View>
 
-      {/* TIMELINE */}
       <View style={styles.box}>
         <Text style={styles.title}>Tiến độ đơn hàng</Text>
-
-        <TimelineItem active text="Đặt hàng thành công" time="06:46 AM" />
-        <TimelineItem active text="Đã xác nhận" time="10:48 AM" />
-        <TimelineItem text="Hoàn tất" time="Đơn hoàn tất sau khi kết thúc" />
+        <TimelineItem active text="Đặt hàng thành công" time="Vừa xong" />
+        <TimelineItem active text="Đã thanh toán" time={paymentMethod} />
+        <TimelineItem text="Hoàn tất" time="Sau khi nhận hàng" />
       </View>
 
-      {/* ITEMS */}
       <View style={styles.box}>
-        <Text style={styles.title}>Chi tiết dịch vụ</Text>
-
-        {items.map((item) => (
-          <View key={item.id} style={styles.item}>
-            <Image source={images[item.image]} style={styles.img} />
-
+        <Text style={styles.title}>Chi tiết đơn hàng</Text>
+        {items.map((item, index) => (
+          <View key={index} style={styles.item}>
+            <Image
+              source={getImage(item.image, item.type)} // ✅ ảnh đúng
+              style={styles.img}
+              resizeMode="cover"
+            />
             <View style={{ flex: 1 }}>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.gray}>{item.time}</Text>
+              <Text style={styles.name} numberOfLines={2}>{item.name}</Text>
+              {item.size ? <Text style={styles.gray}>Size: {item.size}</Text> : null}
+              {item.time ? <Text style={styles.gray}>⏰ {item.time}</Text> : null}
+              <Text style={styles.gray}>SL: {item.quantity}</Text>
             </View>
-
-            <Text style={styles.price}>
-              {(item.price * item.quantity).toLocaleString()}đ
-            </Text>
+            <Text style={styles.price}>{(item.price * item.quantity).toLocaleString()}đ</Text>
           </View>
         ))}
-
-        {/* TOTAL */}
+        <View style={styles.row}><Text style={styles.gray}>Tạm tính</Text><Text>{subtotal.toLocaleString()}đ</Text></View>
+        <View style={styles.row}><Text style={styles.gray}>Phí dịch vụ</Text><Text>{fee.toLocaleString()}đ</Text></View>
         <View style={styles.row}>
-          <Text style={styles.gray}>Tạm tính</Text>
-          <Text>{subtotal.toLocaleString()}đ</Text>
-        </View>
-
-        <View style={styles.row}>
-          <Text style={styles.gray}>Phí dịch vụ</Text>
-          <Text>{fee.toLocaleString()}đ</Text>
-        </View>
-
-        <View style={styles.row}>
-          <Text style={styles.bold}>Tổng cộng</Text>
-          <Text style={styles.total}>{total.toLocaleString()}đ</Text>
+          <Text style={styles.totalLabel}>Tổng cộng</Text>
+          <Text style={styles.totalPrice}>{total.toLocaleString()}đ</Text>
         </View>
       </View>
 
-      {/* PAYMENT */}
       <View style={styles.box}>
         <Text style={styles.title}>Phương thức thanh toán</Text>
-
         <View style={styles.method}>
-          <Ionicons name="wallet-outline" size={18} />
-          <Text style={{ marginLeft: 10 }}>Ví điện tử MoMo</Text>
+          <View style={styles.methodLeft}>
+            <Ionicons name="wallet-outline" size={20} color="#2e7d32" />
+            <Text style={styles.methodText}>{paymentMethod}</Text>
+          </View>
           <Text style={styles.success}>Đã thanh toán</Text>
         </View>
       </View>
 
-      {/* LOCATION */}
-      <View style={styles.box}>
-        <Text style={styles.title}>Địa điểm</Text>
-        <Text style={styles.bold}>Trung tâm thể thao Kinetic Pulse</Text>
-        <Text style={styles.gray}>123 Lý Thường Kiệt, TP.HCM</Text>
-
-        <TouchableOpacity style={styles.mapBtn}>
-          <Ionicons name="navigate-outline" size={16} />
-          <Text style={{ marginLeft: 5 }}>Chỉ đường</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* ACTION */}
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.smallBtn}>
-          <Ionicons name="call-outline" size={16} />
-          <Text> Gọi</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.smallBtn}>
-          <Ionicons name="chatbubble-outline" size={16} />
-          <Text> Nhắn tin</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* BACK HOME */}
-      <TouchableOpacity
-        style={styles.homeBtn}
-        onPress={() => navigation.navigate("Home")}
-      >
+      <TouchableOpacity style={styles.homeBtn} onPress={handleBackHome}>
         <Text style={styles.homeText}>Về trang chủ</Text>
       </TouchableOpacity>
+      <View style={{ height: 30 }} />
     </ScrollView>
   );
 }
 
-/* TIMELINE ITEM */
 const TimelineItem = ({ text, time, active }) => (
   <View style={styles.timelineItem}>
     <View style={styles.timelineLeft}>
-      <View
-        style={[
-          styles.dot,
-          { backgroundColor: active ? "#2e7d32" : "#ccc" },
-        ]}
-      />
+      <View style={[styles.dot, { backgroundColor: active ? "#2e7d32" : "#ccc" }]} />
       <View style={styles.line} />
     </View>
-
     <View style={styles.timelineContent}>
-      <Text style={{ fontWeight: active ? "bold" : "normal" }}>{text}</Text>
+      <Text style={{ fontWeight: active ? "700" : "400" }}>{text}</Text>
       <Text style={styles.gray}>{time}</Text>
     </View>
   </View>
@@ -159,116 +142,31 @@ const TimelineItem = ({ text, time, active }) => (
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f5f5", paddingTop: 50 },
-
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginHorizontal: 15,
-    marginBottom: 10,
-  },
-
-  headerTitle: { fontWeight: "bold", fontSize: 16 },
-
+  header: { flexDirection: "row", justifyContent: "space-between", marginHorizontal: 15, marginBottom: 10 },
+  headerTitle: { fontWeight: "bold", fontSize: 18 },
   code: { color: "#777" },
-
-  successBox: {
-    backgroundColor: "#4CAF50",
-    margin: 15,
-    padding: 15,
-    borderRadius: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-
-  successTitle: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-
-  successSub: { color: "#e8f5e9", fontSize: 12 },
-
-  box: {
-    backgroundColor: "#fff",
-    marginHorizontal: 15,
-    marginBottom: 15,
-    padding: 15,
-    borderRadius: 12,
-  },
-
-  title: { fontWeight: "bold", marginBottom: 10 },
-
-  /* TIMELINE */
+  successBox: { backgroundColor: "#2e7d32", margin: 15, padding: 18, borderRadius: 16, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  successTitle: { color: "#fff", fontWeight: "bold", fontSize: 18 },
+  successSub: { color: "#dcedc8", marginTop: 4 },
+  box: { backgroundColor: "#fff", marginHorizontal: 15, marginBottom: 15, padding: 15, borderRadius: 14 },
+  title: { fontWeight: "bold", fontSize: 15, marginBottom: 12 },
   timelineItem: { flexDirection: "row", marginBottom: 15 },
-
   timelineLeft: { alignItems: "center", marginRight: 10 },
-
-  dot: { width: 10, height: 10, borderRadius: 5 },
-
-  line: { width: 2, height: 40, backgroundColor: "#ccc", marginTop: 2 },
-
+  dot: { width: 12, height: 12, borderRadius: 6 },
+  line: { width: 2, height: 42, backgroundColor: "#ccc", marginTop: 2 },
   timelineContent: { flex: 1 },
-
-  /* ITEM */
-  item: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-
-  img: { width: 50, height: 50, borderRadius: 8, marginRight: 10 },
-
-  name: { fontWeight: "bold" },
-
-  gray: { color: "#777", fontSize: 12 },
-
+  item: { flexDirection: "row", alignItems: "center", marginBottom: 14 },
+  img: { width: 60, height: 60, borderRadius: 10, marginRight: 10 },
+  name: { fontWeight: "700", fontSize: 14 },
+  gray: { color: "#777", fontSize: 12, marginTop: 2 },
   price: { color: "#2e7d32", fontWeight: "bold" },
-
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 5,
-  },
-
-  total: { color: "#2e7d32", fontWeight: "bold" },
-
-  bold: { fontWeight: "bold" },
-
-  method: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
+  row: { flexDirection: "row", justifyContent: "space-between", marginTop: 8 },
+  totalLabel: { fontWeight: "bold", fontSize: 15 },
+  totalPrice: { color: "#2e7d32", fontWeight: "bold", fontSize: 16 },
+  method: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  methodLeft: { flexDirection: "row", alignItems: "center" },
+  methodText: { marginLeft: 8, fontWeight: "600" },
   success: { color: "#2e7d32", fontWeight: "bold" },
-
-  mapBtn: {
-    flexDirection: "row",
-    marginTop: 10,
-    backgroundColor: "#e8f5e9",
-    padding: 8,
-    borderRadius: 8,
-    alignSelf: "flex-start",
-  },
-
-  actions: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginHorizontal: 15,
-    marginBottom: 10,
-  },
-
-  smallBtn: {
-    flexDirection: "row",
-    padding: 10,
-    backgroundColor: "#eee",
-    borderRadius: 10,
-  },
-
-  homeBtn: {
-    backgroundColor: "#2e7d32",
-    margin: 15,
-    padding: 15,
-    borderRadius: 25,
-    alignItems: "center",
-  },
-
-  homeText: { color: "#fff", fontWeight: "bold" },
+  homeBtn: { backgroundColor: "#2e7d32", margin: 15, padding: 16, borderRadius: 30, alignItems: "center" },
+  homeText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
 });

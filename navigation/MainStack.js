@@ -1,3 +1,4 @@
+// navigation/MainStack.js
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -5,30 +6,28 @@ import { Text } from 'react-native';
 
 import HomeScreen from '../screens/HomeScreen';
 import FieldScreen from '../screens/FieldScreen';
+import FieldDetailScreen from '../screens/FieldDetailScreen';
 import BookingScreen from '../screens/BookingScreen';
 import CartScreen from '../screens/CartScreen';
-<<<<<<< HEAD
+import HistoryScreen from '../screens/HistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
 import ShopScreen from '../screens/ShopScreen';
 import ProductDetailScreen from '../screens/ProductDetailScreen';
 import PaymentScreen from '../screens/PaymentScreen';
 import PaymentConfirmScreen from '../screens/PaymentConfirmScreen';
-import EditProfileScreen from '../screens/EditProfileScreen';
-=======
-import HistoryScreen from '../screens/HistoryScreen';
-import ProfileScreen from '../screens/ProfileScreen';
-import FieldDetailScreen from '../screens/FieldDetailScreen';
 
->>>>>>> main
 const Tab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
 const HomeStackNav = createNativeStackNavigator();
 const BookingStackNav = createNativeStackNavigator();
 const CartStackNav = createNativeStackNavigator();
 const ProfileStackNav = createNativeStackNavigator();
+const ShopStackNav = createNativeStackNavigator();
 
 const PRIMARY = '#2ede5a';
 
+// ── Home: HomeScreen → FieldList ─────────────────────────────────
 function HomeStack() {
     return (
         <HomeStackNav.Navigator>
@@ -47,6 +46,7 @@ function HomeStack() {
     );
 }
 
+// ── Booking tab: FieldList ───────────────────────────────────────
 function BookingTabStack() {
     return (
         <BookingStackNav.Navigator>
@@ -60,86 +60,66 @@ function BookingTabStack() {
     );
 }
 
+// ── Cart: CartScreen → Payment → PaymentConfirm ──────────────────
 function CartStack() {
     return (
-<<<<<<< HEAD
-        <Stack.Navigator>
-            <Stack.Screen
-=======
         <CartStackNav.Navigator>
             <CartStackNav.Screen
->>>>>>> main
                 name="CartScreen"
                 component={CartScreen}
                 options={{ headerShown: false }}
             />
-<<<<<<< HEAD
-
-            {/* 👇 THÊM 2 MÀN HÌNH */}
-            <Stack.Screen
+            <CartStackNav.Screen
                 name="Payment"
                 component={PaymentScreen}
                 options={{ headerShown: false }}
             />
-
-            <Stack.Screen
+            <CartStackNav.Screen
                 name="PaymentConfirm"
                 component={PaymentConfirmScreen}
                 options={{ headerShown: false }}
             />
-        </Stack.Navigator>
-=======
         </CartStackNav.Navigator>
->>>>>>> main
     );
 }
 
+// ── Profile: ProfileScreen → EditProfile ─────────────────────────
 function ProfileStack() {
     return (
-<<<<<<< HEAD
-        <Stack.Navigator>
-            <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: false }} />
-        </Stack.Navigator>
-
-    );
-}
-
-// ── Shop Stack: Shop → ProductDetail ────────────────────────────
-function ShopStack() {
-    return (
-        <Stack.Navigator>
-            <Stack.Screen
-                name="ShopScreen"
-                component={ShopScreen}
-                options={{ headerShown: false }}
-            />
-            <Stack.Screen
-                name="ProductDetail"
-                component={ProductDetailScreen}
-                options={{
-                    headerShown: true,
-                    title: 'Chi tiết sản phẩm',
-                    headerStyle: { backgroundColor: '#2E7D32' },
-                    headerTintColor: '#fff',
-                    headerTitleStyle: { fontWeight: '700' },
-                    // Dùng header tùy chỉnh nếu muốn ẩn:
-                    // headerShown: false,
-                }}
-            />
-        </Stack.Navigator>
-=======
         <ProfileStackNav.Navigator>
             <ProfileStackNav.Screen
                 name="ProfileScreen"
                 component={ProfileScreen}
                 options={{ headerShown: false }}
             />
+            <ProfileStackNav.Screen
+                name="EditProfile"
+                component={EditProfileScreen}
+                options={{ headerShown: false }}
+            />
         </ProfileStackNav.Navigator>
->>>>>>> main
     );
 }
 
+// ── Shop: ShopScreen → ProductDetail ─────────────────────────────
+function ShopStack() {
+    return (
+        <ShopStackNav.Navigator>
+            <ShopStackNav.Screen
+                name="ShopScreen"
+                component={ShopScreen}
+                options={{ headerShown: false }}
+            />
+            <ShopStackNav.Screen
+                name="ProductDetail"
+                component={ProductDetailScreen}
+                options={{ headerShown: false }}
+            />
+        </ShopStackNav.Navigator>
+    );
+}
+
+// ── Tab Icons / Labels ───────────────────────────────────────────
 const TAB_ICONS = {
     Home: '🏠',
     Booking: '📅',
@@ -186,22 +166,16 @@ function TabNavigator() {
             })}
         >
             <Tab.Screen name="Home" component={HomeStack} />
-<<<<<<< HEAD
-            <Tab.Screen name="Booking" component={BookingStack} />
-            <Tab.Screen name="Shop" component={ShopStack} />
-=======
             <Tab.Screen name="Booking" component={BookingTabStack} />
->>>>>>> main
+            <Tab.Screen name="Shop" component={ShopStack} />
             <Tab.Screen name="Cart" component={CartStack} />
             <Tab.Screen name="History" component={HistoryScreen} />
             <Tab.Screen name="Profile" component={ProfileStack} />
         </Tab.Navigator>
     );
 }
-<<<<<<< HEAD
-=======
 
-
+// ── Root Stack: Tab + màn hình overlay toàn app ──────────────────
 export default function MainStack() {
     return (
         <RootStack.Navigator screenOptions={{ headerShown: false }}>
@@ -217,10 +191,9 @@ export default function MainStack() {
                 options={{
                     headerShown: true,
                     title: 'Đặt sân',
-                    headerBackTitle: 'Quay lại'
+                    headerBackTitle: 'Quay lại',
                 }}
             />
         </RootStack.Navigator>
     );
 }
->>>>>>> main

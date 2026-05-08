@@ -1,18 +1,16 @@
 // screens/ProfileScreen.js
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext } from 'react';
 import {
     View, Text, StyleSheet, ScrollView, TouchableOpacity,
-    StatusBar, Dimensions, Alert, ActivityIndicator,
+    StatusBar, Alert,
 } from 'react-native';
 import { AuthContext } from '../store/AuthContext';
-import { getUserBookings } from '../services/jsonDataService';
+import { HistoryContext } from './HistoryContext';
 
-const { width } = Dimensions.get('window');
 const GREEN = '#2E7D32';
 const GREEN_MID = '#4CAF50';
 const GREEN_LIGHT = '#66BB6A';
 
-// ── Avatar placeholder (chữ cái đầu) ─────────────────────────────
 function Avatar({ name }) {
     const initials = name
         ? name.split(' ').map(w => w[0]).slice(-2).join('').toUpperCase()
@@ -24,7 +22,6 @@ function Avatar({ name }) {
     );
 }
 
-// ── Menu item ─────────────────────────────────────────────────────
 function MenuItem({ icon, label, subtitle, onPress, danger }) {
     return (
         <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
@@ -44,51 +41,18 @@ function SectionTitle({ title }) {
     return <Text style={styles.sectionTitle}>{title}</Text>;
 }
 
-// ── Stat item với loading skeleton ────────────────────────────────
-function StatItem({ value, label, loading }) {
-    return (
-        <View style={styles.statItem}>
-            {loading ? (
-                <View style={styles.statSkeleton} />
-            ) : (
-                <Text style={styles.statValue}>{value}</Text>
-            )}
-            <Text style={styles.statLabel}>{label}</Text>
-        </View>
-    );
-}
+const formatMoney = (amount) => {
+    if (amount >= 1000000) return `${(amount / 1000000).toFixed(1).replace('.0', '')}tr`;
+    if (amount >= 1000) return `${Math.round(amount / 1000)}k`;
+    return `${amount}`;
+};
 
 export default function ProfileScreen({ navigation }) {
     const { user, logout } = useContext(AuthContext);
-
-    const [stats, setStats] = useState({ total: 0, confirmed: 0, pending: 0, totalSpent: 0 });
-    const [loadingStats, setLoadingStats] = useState(true);
+    const { stats } = useContext(HistoryContext);
 
     const fullName = user?.fullName || 'Người dùng';
     const email = user?.email || '';
-
-    // ── Load booking thật từ AsyncStorage ─────────────────────────
-    useEffect(() => {
-        if (!user?.id) {
-            setLoadingStats(false);
-            return;
-        }
-        (async () => {
-            try {
-                const bookings = await getUserBookings(user.id);
-                const confirmed = bookings.filter(b => b.status === 'confirmed').length;
-                const pending = bookings.filter(b => b.status === 'pending').length;
-                const totalSpent = bookings
-                    .filter(b => b.status === 'confirmed')
-                    .reduce((sum, b) => sum + (b.totalPrice || 0), 0);
-                setStats({ total: bookings.length, confirmed, pending, totalSpent });
-            } catch (e) {
-                console.error('Lỗi load booking stats:', e);
-            } finally {
-                setLoadingStats(false);
-            }
-        })();
-    }, [user?.id]);
 
     const handleLogout = () => {
         Alert.alert(
@@ -101,23 +65,19 @@ export default function ProfileScreen({ navigation }) {
         );
     };
 
-    // Format tiền gọn: 1.200.000 → 1,2tr
-    const formatMoney = (amount) => {
-        if (amount >= 1000000) return `${(amount / 1000000).toFixed(1).replace('.0', '')}tr`;
-        if (amount >= 1000) return `${Math.round(amount / 1000)}k`;
-        return `${amount}`;
-    };
-    const thongbao = () => Alert.alert('Thông báo', 'Chưa có thông báo mới !');
     return (
         <View style={styles.root}>
             <StatusBar barStyle="light-content" backgroundColor={GREEN} />
             <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
 
-                {/* ── HEADER ── */}
+                {/* HEADER */}
                 <View style={styles.header}>
                     <View style={styles.headerTop}>
                         <Text style={styles.headerTitle}>Thuê Sân Thể{'\n'}Thao</Text>
-                        <TouchableOpacity style={styles.notifBtn} onPress={thongbao} activeOpacity={0.8}>
+                        <TouchableOpacity
+                            style={styles.notifBtn}
+                            onPress={() => Alert.alert('Thông báo', 'Chưa có thông báo mới!')}
+                        >
                             <Text style={styles.notifIcon}>🔔</Text>
                         </TouchableOpacity>
                     </View>
@@ -137,38 +97,35 @@ export default function ProfileScreen({ navigation }) {
                         </View>
                     </View>
 
-                    {/* Stats — lấy từ booking thật */}
+                    {/* Stats từ HistoryContext */}
                     <View style={styles.statsRow}>
-                        <StatItem
-                            value={stats.total}
-                            label="TỔNG ĐẶT SÂN"
-                            loading={loadingStats}
-                        />
+                        <View style={styles.statItem}>
+                            <Text style={styles.statValue}>{stats.total}</Text>
+                            <Text style={styles.statLabel}>TỔNG ĐẶT SÂN</Text>
+                        </View>
                         <View style={styles.statDivider} />
-                        <StatItem
-                            value={stats.confirmed}
-                            label="ĐÃ XÁC NHẬN"
-                            loading={loadingStats}
-                        />
+                        <View style={styles.statItem}>
+                            <Text style={styles.statValue}>{stats.confirmed}</Text>
+                            <Text style={styles.statLabel}>ĐÃ XÁC NHẬN</Text>
+                        </View>
                         <View style={styles.statDivider} />
-                        <StatItem
-                            value={formatMoney(stats.totalSpent)}
-                            label="ĐÃ CHI"
-                            loading={loadingStats}
-                        />
+                        <View style={styles.statItem}>
+                            <Text style={styles.statValue}>{formatMoney(stats.totalSpent)}</Text>
+                            <Text style={styles.statLabel}>ĐÃ CHI</Text>
+                        </View>
                     </View>
                 </View>
 
-                {/* ── BODY ── */}
+                {/* BODY */}
                 <View style={styles.body}>
 
-                    {/* Booking nhanh */}
-                    {!loadingStats && stats.pending > 0 && (
+                    {/* Pending card */}
+                    {stats.pending > 0 && (
                         <View style={styles.pendingCard}>
                             <Text style={styles.pendingIcon}>⏳</Text>
                             <View style={{ flex: 1, marginLeft: 10 }}>
                                 <Text style={styles.pendingTitle}>
-                                    Bạn có {stats.pending} lịch đặt đang chờ xác nhận
+                                    Bạn có {stats.pending} đơn đang xử lý
                                 </Text>
                                 <Text style={styles.pendingSub}>Kiểm tra lịch sử để xem chi tiết</Text>
                             </View>
@@ -178,7 +135,6 @@ export default function ProfileScreen({ navigation }) {
                         </View>
                     )}
 
-                    {/* Quản lý tài khoản */}
                     <SectionTitle title="Quản lý tài khoản" />
                     <View style={styles.menuCard}>
                         <MenuItem
@@ -191,7 +147,7 @@ export default function ProfileScreen({ navigation }) {
                         <MenuItem
                             icon="📅"
                             label="Lịch sử đặt sân"
-                            subtitle={loadingStats ? 'Đang tải...' : `${stats.total} lịch đặt`}
+                            subtitle={`${stats.total} đơn hàng`}
                             onPress={() => navigation.navigate('History')}
                         />
                         <View style={styles.menuSep} />
@@ -210,7 +166,6 @@ export default function ProfileScreen({ navigation }) {
                         />
                     </View>
 
-                    {/* Hệ thống */}
                     <SectionTitle title="Hệ thống" />
                     <View style={styles.menuCard}>
                         <MenuItem
@@ -226,17 +181,10 @@ export default function ProfileScreen({ navigation }) {
                         />
                     </View>
 
-                    {/* Đăng xuất */}
                     <View style={[styles.menuCard, { marginTop: 8 }]}>
-                        <MenuItem
-                            icon="🚪"
-                            label="Đăng xuất"
-                            onPress={handleLogout}
-                            danger
-                        />
+                        <MenuItem icon="🚪" label="Đăng xuất" onPress={handleLogout} danger />
                     </View>
 
-                    {/* Banner VIP */}
                     <View style={styles.banner}>
                         <View style={styles.bannerLeft}>
                             <Text style={styles.bannerTag}>GÓI ĐẶC BIỆT</Text>
@@ -257,15 +205,10 @@ export default function ProfileScreen({ navigation }) {
 
 const styles = StyleSheet.create({
     root: { flex: 1, backgroundColor: '#f5f5f5' },
-
-    // Header
     header: {
         backgroundColor: GREEN,
-        paddingTop: 48,
-        paddingHorizontal: 20,
-        paddingBottom: 24,
-        borderBottomLeftRadius: 28,
-        borderBottomRightRadius: 28,
+        paddingTop: 48, paddingHorizontal: 20, paddingBottom: 24,
+        borderBottomLeftRadius: 28, borderBottomRightRadius: 28,
     },
     headerTop: {
         flexDirection: 'row', justifyContent: 'space-between',
@@ -278,16 +221,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center', alignItems: 'center',
     },
     notifIcon: { fontSize: 18 },
-
-    // Avatar
     avatarCircle: {
         width: 64, height: 64, borderRadius: 32,
         backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center',
         borderWidth: 3, borderColor: GREEN_LIGHT,
     },
     avatarText: { fontSize: 24, fontWeight: '800', color: GREEN },
-
-    // Profile card
     profileCard: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 20 },
     profileInfo: { flex: 1 },
     profileName: { fontSize: 20, fontWeight: '800', color: '#fff', marginBottom: 2 },
@@ -301,8 +240,6 @@ const styles = StyleSheet.create({
     },
     badgeStar: { fontSize: 12, color: '#FFD700' },
     badgeText: { fontSize: 11, color: '#FFD700', fontWeight: '700', letterSpacing: 0.5 },
-
-    // Stats
     statsRow: {
         flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.15)',
         borderRadius: 16, paddingVertical: 14, paddingHorizontal: 16,
@@ -311,20 +248,12 @@ const styles = StyleSheet.create({
     statItem: { alignItems: 'center', flex: 1 },
     statValue: { fontSize: 22, fontWeight: '900', color: '#fff' },
     statLabel: { fontSize: 9, color: 'rgba(255,255,255,0.75)', letterSpacing: 0.6, marginTop: 3, textAlign: 'center' },
-    statSkeleton: {
-        width: 36, height: 22, borderRadius: 6,
-        backgroundColor: 'rgba(255,255,255,0.25)', marginBottom: 2,
-    },
     statDivider: { width: 1, height: 32, backgroundColor: 'rgba(255,255,255,0.3)' },
-
-    // Body
     body: { paddingHorizontal: 16, paddingTop: 20 },
     sectionTitle: {
         fontSize: 13, fontWeight: '700', color: '#555',
         letterSpacing: 0.5, marginBottom: 8, marginLeft: 4,
     },
-
-    // Pending card
     pendingCard: {
         flexDirection: 'row', alignItems: 'center',
         backgroundColor: '#FFF8E1', borderRadius: 14, padding: 14,
@@ -334,8 +263,6 @@ const styles = StyleSheet.create({
     pendingTitle: { fontSize: 13, fontWeight: '700', color: '#795548' },
     pendingSub: { fontSize: 11, color: '#A1887F', marginTop: 2 },
     pendingAction: { fontSize: 13, fontWeight: '700', color: '#E65100', paddingLeft: 8 },
-
-    // Menu card
     menuCard: {
         backgroundColor: '#fff', borderRadius: 16, marginBottom: 16,
         overflow: 'hidden',
@@ -357,14 +284,10 @@ const styles = StyleSheet.create({
     menuSubtitle: { fontSize: 12, color: '#999', marginTop: 2 },
     menuArrow: { fontSize: 22, color: '#ccc', fontWeight: '300' },
     menuSep: { height: 1, backgroundColor: '#f0f0f0', marginLeft: 66 },
-
-    // Banner VIP
     banner: {
-        backgroundColor: GREEN,
-        borderRadius: 20, padding: 20,
+        backgroundColor: GREEN, borderRadius: 20, padding: 20,
         flexDirection: 'row', alignItems: 'center',
-        justifyContent: 'space-between', marginTop: 8,
-        overflow: 'hidden',
+        justifyContent: 'space-between', marginTop: 8, overflow: 'hidden',
     },
     bannerLeft: { flex: 1 },
     bannerTag: { fontSize: 10, fontWeight: '800', color: '#FFD700', letterSpacing: 1.5, marginBottom: 6 },

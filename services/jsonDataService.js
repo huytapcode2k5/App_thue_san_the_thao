@@ -92,7 +92,7 @@ export const addField = async (newField) => {
     }
 };
 
-<<<<<<< HEAD
+
 const updateFieldAvailability = async (fieldId, available) => {
     const fields = await getFields();
     const index = fields.findIndex(f => f.id === toStr(fieldId));
@@ -102,8 +102,8 @@ const updateFieldAvailability = async (fieldId, available) => {
     }
 };
 
-=======
->>>>>>> main
+
+
 // ── BOOKING SERVICES ─────────────────────────────────────────────
 export const getBookings = async () => {
     try {
@@ -119,8 +119,7 @@ export const getBookings = async () => {
 export const getUserBookings = async (userId) => {
     const bookings = await getBookings();
     return bookings.filter(b => b.userId === toStr(userId));
-<<<<<<< HEAD
-=======
+
 };
 
 // Lấy các slot đã bị đặt của 1 sân trong 1 ngày cụ thể
@@ -137,7 +136,7 @@ export const getBookedSlots = async (fieldId, date) => {
     } catch (error) {
         return [];
     }
->>>>>>> main
+
 };
 
 export const createBooking = async (bookingData) => {

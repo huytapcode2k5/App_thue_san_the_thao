@@ -1,38 +1,33 @@
-import React, { useState, useRef } from 'react';
+// screens/ProductDetailScreen.js
+import React, { useState, useRef, useContext } from 'react';
 import {
     View, Text, StyleSheet, ScrollView, TouchableOpacity,
-    StatusBar, Animated, Dimensions, Alert
+    Image, StatusBar, Animated, Dimensions, Alert
 } from 'react-native';
+import { CartContext } from '../screens/CartContext';
+import { PRODUCT_IMAGES } from '../services/productsData';
 
 const { width } = Dimensions.get('window');
 const PRIMARY = '#2E7D32';
 const PRIMARY_LIGHT = '#4CAF50';
 const ACCENT = '#FF6F00';
 
-const formatPrice = (p) => p.toLocaleString('vi-VN') + '₫';
+const formatPrice = (p) => p?.toLocaleString('vi-VN') + '₫';
 
-// ── Mock related products ───────────────────────────────────────
-const RELATED = [
-    { id: 'r1', name: 'Giày Bóng Rổ Air Jump', price: 1950000, rating: 4.6, image: '🏀', badge: 'NEW' },
-    { id: 'r2', name: 'Vớ Thể Thao Premium', price: 95000, rating: 4.5, image: '🧦', badge: null },
-    { id: 'r3', name: 'Túi Gym Sport Pro', price: 450000, rating: 4.8, image: '👜', badge: 'HOT' },
-    { id: 'r4', name: 'Áo Chạy Bộ Breathe', price: 320000, rating: 4.4, image: '🎽', badge: null },
-];
-
-const SIZES = ['38', '39', '40', '41', '42', '43', '44'];
+const SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
 const COLORS = ['#222222', '#1565C0', '#2E7D32', '#C62828', '#F9A825'];
 
 const REVIEWS = [
-    { id: '1', name: 'Nguyễn Văn A', avatar: '👤', rating: 5, text: 'Sản phẩm rất tốt, đúng như mô tả. Đế giày êm, chạy bộ rất thoải mái!', date: '12/04/2025' },
-    { id: '2', name: 'Trần Thị B', avatar: '👤', rating: 4, text: 'Chất lượng ổn, giao hàng nhanh. Tuy nhiên size hơi to hơn so với thường.', date: '08/04/2025' },
-    { id: '3', name: 'Lê Văn C', avatar: '👤', rating: 5, text: 'Mua lần 2 rồi, vẫn giữ nguyên chất lượng. Rất đáng tiền!', date: '01/04/2025' },
+    { id: '1', name: 'Nguyễn Văn A', rating: 5, text: 'Sản phẩm rất tốt, đúng như mô tả. Chất lượng cao!', date: '12/04/2025' },
+    { id: '2', name: 'Trần Thị B', rating: 4, text: 'Chất lượng ổn, giao hàng nhanh. Rất hài lòng.', date: '08/04/2025' },
+    { id: '3', name: 'Lê Văn C', rating: 5, text: 'Mua lần 2 rồi, vẫn giữ nguyên chất lượng. Đáng tiền!', date: '01/04/2025' },
 ];
 
-function StarRow({ rating, size = 14, color = '#F9A825' }) {
+function StarRow({ rating, size = 14 }) {
     return (
         <View style={{ flexDirection: 'row', gap: 2 }}>
             {[1, 2, 3, 4, 5].map(i => (
-                <Text key={i} style={{ fontSize: size, color: i <= Math.round(rating) ? color : '#ddd' }}>★</Text>
+                <Text key={i} style={{ fontSize: size, color: i <= Math.round(rating) ? '#F9A825' : '#ddd' }}>★</Text>
             ))}
         </View>
     );
@@ -43,7 +38,7 @@ function ReviewCard({ review }) {
         <View style={styles.reviewCard}>
             <View style={styles.reviewHeader}>
                 <View style={styles.reviewAvatar}>
-                    <Text style={{ fontSize: 20 }}>{review.avatar}</Text>
+                    <Text style={{ fontSize: 18 }}>👤</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                     <Text style={styles.reviewName}>{review.name}</Text>
@@ -58,37 +53,9 @@ function ReviewCard({ review }) {
     );
 }
 
-function RelatedCard({ item, onPress }) {
-    return (
-        <TouchableOpacity style={styles.relCard} onPress={() => onPress(item)} activeOpacity={0.85}>
-            {item.badge && (
-                <View style={[styles.relBadge, item.badge === 'HOT' && { backgroundColor: '#C62828' }]}>
-                    <Text style={styles.relBadgeText}>{item.badge}</Text>
-                </View>
-            )}
-            <View style={styles.relImageBox}>
-                <Text style={styles.relEmoji}>{item.image}</Text>
-            </View>
-            <Text style={styles.relName} numberOfLines={2}>{item.name}</Text>
-            <Text style={styles.relPrice}>{formatPrice(item.price)}</Text>
-        </TouchableOpacity>
-    );
-}
-
-// ── Main Screen ─────────────────────────────────────────────────
 export default function ProductDetailScreen({ route, navigation }) {
-    // Nhận product từ navigation hoặc dùng mock
-    const product = route?.params?.product ?? {
-        id: '1',
-        name: 'Giày Chạy Bộ Performance Pulse 2i',
-        price: 2450000,
-        originalPrice: 3200000,
-        rating: 4.8,
-        reviews: 128,
-        image: '👟',
-        badge: 'HOT',
-        description: 'Giày chạy bộ Performance Pulse 2i được thiết kế dành riêng cho các vận động viên chuyên nghiệp. Với công nghệ đế Pulse Foam tiên tiến, đôi giày mang lại cảm giác êm ái tuyệt vời trong mỗi bước chạy.\n\n✅ Chất liệu upper thoáng khí Mesh 3D\n✅ Đế ngoài cao su Rubber Grip chống trơn trượt\n✅ Lót trong có thể tháo rời, kháng khuẩn\n✅ Phù hợp chạy đường dài và tập gym',
-    };
+    const { addToCart } = useContext(CartContext);
+    const product = route?.params?.product;
 
     const [selectedSize, setSelectedSize] = useState(null);
     const [selectedColor, setSelectedColor] = useState(COLORS[0]);
@@ -96,6 +63,15 @@ export default function ProductDetailScreen({ route, navigation }) {
     const [isFav, setIsFav] = useState(false);
     const scrollY = useRef(new Animated.Value(0)).current;
 
+    if (!product) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text>Không tìm thấy sản phẩm</Text>
+            </View>
+        );
+    }
+
+    const imgSrc = PRODUCT_IMAGES[product.image];
     const discount = product.originalPrice
         ? Math.round((1 - product.price / product.originalPrice) * 100)
         : null;
@@ -111,7 +87,16 @@ export default function ProductDetailScreen({ route, navigation }) {
             Alert.alert('Chọn size', 'Vui lòng chọn size trước khi thêm vào giỏ hàng.');
             return;
         }
-        Alert.alert('✅ Thành công', `Đã thêm ${qty} sản phẩm vào giỏ hàng!`);
+        addToCart({
+            id: product.id + '-' + selectedSize,
+            name: product.name,
+            price: product.price,
+            quantity: qty,
+            image: product.image,
+            size: selectedSize,
+            color: selectedColor,
+        });
+        Alert.alert('✅ Thành công', 'Sản phẩm đã được thêm vào giỏ hàng!');
     };
 
     const handleBuyNow = () => {
@@ -119,7 +104,12 @@ export default function ProductDetailScreen({ route, navigation }) {
             Alert.alert('Chọn size', 'Vui lòng chọn size trước khi mua.');
             return;
         }
-        navigation?.navigate('Cart');
+        navigation.navigate('Cart', {
+            screen: 'Payment',
+            params: {
+                items: [{ id: product.id, name: product.name, price: product.price, quantity: qty, image: product.image, size: selectedSize }],
+            },
+        });
     };
 
     return (
@@ -138,13 +128,20 @@ export default function ProductDetailScreen({ route, navigation }) {
 
             <Animated.ScrollView
                 showsVerticalScrollIndicator={false}
-                onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
+                onScroll={Animated.event(
+                    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                    { useNativeDriver: false }
+                )}
                 scrollEventThrottle={16}
             >
                 {/* Hero Image */}
                 <View style={styles.hero}>
                     <View style={styles.heroImageBox}>
-                        <Text style={styles.heroEmoji}>{product.image}</Text>
+                        {imgSrc ? (
+                            <Image source={imgSrc} style={styles.heroImage} resizeMode="contain" />
+                        ) : (
+                            <Text style={styles.heroEmoji}>🛍️</Text>
+                        )}
                         {discount && (
                             <View style={styles.heroBadge}>
                                 <Text style={styles.heroBadgeText}>-{discount}%</Text>
@@ -153,40 +150,36 @@ export default function ProductDetailScreen({ route, navigation }) {
                     </View>
                 </View>
 
-                {/* Content */}
                 <View style={styles.content}>
+                    {/* Tên sản phẩm */}
+                    <Text style={styles.productName}>{product.name}</Text>
 
-                    {/* Title row */}
-                    <View style={styles.titleRow}>
-                        <Text style={styles.productName}>{product.name}</Text>
-                    </View>
-
-                    {/* Rating + sold */}
+                    {/* Rating */}
                     <View style={styles.metaRow}>
                         <StarRow rating={product.rating} />
                         <Text style={styles.metaRating}>{product.rating}</Text>
                         <Text style={styles.metaReviews}>({product.reviews} đánh giá)</Text>
-                        <View style={styles.metaDivider} />
                         <Text style={styles.metaSold}>🔥 Đã bán 1.2k</Text>
                     </View>
 
-                    {/* Price */}
+                    {/* Giá */}
                     <View style={styles.priceSection}>
                         <Text style={styles.mainPrice}>{formatPrice(product.price)}</Text>
                         {product.originalPrice && (
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
                                 <Text style={styles.oldPrice}>{formatPrice(product.originalPrice)}</Text>
                                 <View style={styles.saveBadge}>
-                                    <Text style={styles.saveText}>Tiết kiệm {formatPrice(product.originalPrice - product.price)}</Text>
+                                    <Text style={styles.saveText}>
+                                        Tiết kiệm {formatPrice(product.originalPrice - product.price)}
+                                    </Text>
                                 </View>
                             </View>
                         )}
                     </View>
 
-                    {/* Divider */}
                     <View style={styles.divider} />
 
-                    {/* Colors */}
+                    {/* Màu sắc */}
                     <Text style={styles.sectionLabel}>Màu sắc</Text>
                     <View style={styles.colorRow}>
                         {COLORS.map(c => (
@@ -201,12 +194,7 @@ export default function ProductDetailScreen({ route, navigation }) {
                     </View>
 
                     {/* Size */}
-                    <View style={styles.sizeHeader}>
-                        <Text style={styles.sectionLabel}>Size</Text>
-                        <TouchableOpacity>
-                            <Text style={styles.sizeGuide}>📏 Hướng dẫn chọn size</Text>
-                        </TouchableOpacity>
-                    </View>
+                    <Text style={styles.sectionLabel}>Size</Text>
                     <View style={styles.sizeRow}>
                         {SIZES.map(s => (
                             <TouchableOpacity
@@ -219,21 +207,15 @@ export default function ProductDetailScreen({ route, navigation }) {
                         ))}
                     </View>
 
-                    {/* Quantity */}
+                    {/* Số lượng */}
                     <View style={styles.qtySection}>
                         <Text style={styles.sectionLabel}>Số lượng</Text>
                         <View style={styles.qtyControl}>
-                            <TouchableOpacity
-                                style={styles.qtyBtn}
-                                onPress={() => setQty(q => Math.max(1, q - 1))}
-                            >
+                            <TouchableOpacity style={styles.qtyBtn} onPress={() => setQty(q => Math.max(1, q - 1))}>
                                 <Text style={styles.qtyBtnText}>−</Text>
                             </TouchableOpacity>
                             <Text style={styles.qtyNum}>{qty}</Text>
-                            <TouchableOpacity
-                                style={[styles.qtyBtn, styles.qtyBtnPlus]}
-                                onPress={() => setQty(q => q + 1)}
-                            >
+                            <TouchableOpacity style={[styles.qtyBtn, styles.qtyBtnPlus]} onPress={() => setQty(q => q + 1)}>
                                 <Text style={[styles.qtyBtnText, { color: '#fff' }]}>+</Text>
                             </TouchableOpacity>
                         </View>
@@ -253,37 +235,22 @@ export default function ProductDetailScreen({ route, navigation }) {
 
                     <View style={styles.divider} />
 
-                    {/* Description */}
+                    {/* Mô tả */}
                     <Text style={styles.sectionLabel}>Mô tả sản phẩm</Text>
-                    <Text style={styles.description}>{product.description ?? 'Sản phẩm chất lượng cao, phù hợp cho mọi hoạt động thể thao.'}</Text>
+                    <Text style={styles.description}>{product.description}</Text>
 
                     <View style={styles.divider} />
 
-                    {/* Reviews */}
-                    <View style={styles.reviewsHeader}>
-                        <Text style={styles.sectionLabel}>Đánh giá từ khách hàng</Text>
-                        <View style={styles.overallRating}>
-                            <Text style={styles.bigRating}>{product.rating}</Text>
-                            <View>
-                                <StarRow rating={product.rating} size={13} />
-                                <Text style={styles.totalReviews}>{product.reviews} đánh giá</Text>
-                            </View>
+                    {/* Đánh giá */}
+                    <Text style={styles.sectionLabel}>Đánh giá từ khách hàng</Text>
+                    <View style={styles.overallRating}>
+                        <Text style={styles.bigRating}>{product.rating}</Text>
+                        <View>
+                            <StarRow rating={product.rating} size={13} />
+                            <Text style={styles.totalReviews}>{product.reviews} đánh giá</Text>
                         </View>
                     </View>
                     {REVIEWS.map(r => <ReviewCard key={r.id} review={r} />)}
-                    <TouchableOpacity style={styles.moreReviews}>
-                        <Text style={styles.moreReviewsText}>Xem tất cả đánh giá →</Text>
-                    </TouchableOpacity>
-
-                    <View style={styles.divider} />
-
-                    {/* Related */}
-                    <Text style={styles.sectionLabel}>Có thể bạn thích</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingRight: 16, paddingBottom: 4 }}>
-                        {RELATED.map(item => (
-                            <RelatedCard key={item.id} item={item} onPress={() => { }} />
-                        ))}
-                    </ScrollView>
 
                     <View style={{ height: 120 }} />
                 </View>
@@ -305,55 +272,39 @@ export default function ProductDetailScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#fff' },
-
-    // Floating header
     floatingHeader: {
-        position: 'absolute', top: 0, left: 0, right: 0,
-        zIndex: 100, flexDirection: 'row', justifyContent: 'space-between',
+        position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100,
+        flexDirection: 'row', justifyContent: 'space-between',
         paddingTop: 44, paddingHorizontal: 16, paddingBottom: 10,
     },
     backBtn: {
         width: 40, height: 40, borderRadius: 20,
         backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center',
-        elevation: 3, shadowColor: '#000', shadowOpacity: 0.12, shadowOffset: { width: 0, height: 2 }, shadowRadius: 4,
+        elevation: 3,
     },
     backIcon: { fontSize: 24, color: '#222', fontWeight: '600' },
-
-    // Hero
     hero: { backgroundColor: '#f0f7f0' },
-    heroImageBox: {
-        height: 280, alignItems: 'center', justifyContent: 'center',
-    },
-    heroEmoji: { fontSize: 120 },
+    heroImageBox: { height: 300, alignItems: 'center', justifyContent: 'center' },
+    heroImage: { width: '100%', height: '100%' },
+    heroEmoji: { fontSize: 100 },
     heroBadge: {
         position: 'absolute', top: 70, right: 20,
-        backgroundColor: ACCENT, borderRadius: 12,
-        paddingHorizontal: 10, paddingVertical: 4,
+        backgroundColor: ACCENT, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4,
     },
     heroBadgeText: { color: '#fff', fontWeight: '900', fontSize: 13 },
-
-    // Content
     content: { paddingHorizontal: 16, paddingTop: 20 },
-    titleRow: { marginBottom: 10 },
-    productName: { fontSize: 20, fontWeight: '800', color: '#1a1a1a', lineHeight: 28 },
-
+    productName: { fontSize: 20, fontWeight: '800', color: '#1a1a1a', lineHeight: 28, marginBottom: 10 },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12, flexWrap: 'wrap' },
     metaRating: { fontSize: 13, fontWeight: '700', color: '#333' },
     metaReviews: { fontSize: 12, color: '#888' },
-    metaDivider: { width: 1, height: 14, backgroundColor: '#ddd' },
     metaSold: { fontSize: 12, color: '#888' },
-
     priceSection: { marginBottom: 16 },
     mainPrice: { fontSize: 28, fontWeight: '900', color: PRIMARY },
     oldPrice: { fontSize: 14, color: '#bbb', textDecorationLine: 'line-through' },
     saveBadge: { backgroundColor: '#E8F5E9', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
     saveText: { fontSize: 11, color: PRIMARY, fontWeight: '700' },
-
     divider: { height: 1, backgroundColor: '#f0f0f0', marginVertical: 16 },
-
     sectionLabel: { fontSize: 15, fontWeight: '700', color: '#1a1a1a', marginBottom: 10 },
-
-    // Colors
     colorRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
     colorDot: {
         width: 30, height: 30, borderRadius: 15,
@@ -361,41 +312,30 @@ const styles = StyleSheet.create({
         borderWidth: 2, borderColor: 'transparent',
     },
     colorDotActive: { borderColor: PRIMARY, transform: [{ scale: 1.15 }] },
-
-    // Sizes
-    sizeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-    sizeGuide: { fontSize: 12, color: PRIMARY, fontWeight: '600' },
     sizeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
     sizeBtn: {
-        width: 48, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
+        paddingHorizontal: 20, height: 40, borderRadius: 10,
+        alignItems: 'center', justifyContent: 'center',
         borderWidth: 1.5, borderColor: '#e0e0e0', backgroundColor: '#fafafa',
     },
     sizeBtnActive: { borderColor: PRIMARY, backgroundColor: '#E8F5E9' },
     sizeBtnText: { fontSize: 13, color: '#555', fontWeight: '600' },
     sizeBtnTextActive: { color: PRIMARY, fontWeight: '800' },
-
-    // Qty
     qtySection: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
-    qtyControl: { flexDirection: 'row', alignItems: 'center', gap: 0 },
+    qtyControl: { flexDirection: 'row', alignItems: 'center' },
     qtyBtn: {
-        width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
+        width: 36, height: 36, borderRadius: 10,
+        alignItems: 'center', justifyContent: 'center',
         backgroundColor: '#f0f0f0', borderWidth: 1, borderColor: '#e0e0e0',
     },
     qtyBtnPlus: { backgroundColor: PRIMARY, borderColor: PRIMARY },
-    qtyBtnText: { fontSize: 20, color: '#333', lineHeight: 22, fontWeight: '400' },
+    qtyBtnText: { fontSize: 20, color: '#333', fontWeight: '400' },
     qtyNum: { width: 44, textAlign: 'center', fontSize: 17, fontWeight: '800', color: '#1a1a1a' },
-
-    // Perks
     perksRow: { flexDirection: 'row', justifyContent: 'space-around' },
     perkItem: { alignItems: 'center', gap: 4 },
     perkIcon: { fontSize: 22 },
     perkLabel: { fontSize: 11, color: '#555', fontWeight: '500', textAlign: 'center' },
-
-    // Description
     description: { fontSize: 14, color: '#555', lineHeight: 22 },
-
-    // Reviews
-    reviewsHeader: { marginBottom: 12 },
     overallRating: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
     bigRating: { fontSize: 42, fontWeight: '900', color: '#1a1a1a' },
     totalReviews: { fontSize: 11, color: '#888', marginTop: 2 },
@@ -409,38 +349,13 @@ const styles = StyleSheet.create({
         backgroundColor: '#E8F5E9', alignItems: 'center', justifyContent: 'center',
     },
     reviewName: { fontSize: 13, fontWeight: '700', color: '#222', marginBottom: 2 },
-    reviewDate: { fontSize: 10, color: '#bbb', marginLeft: 4 },
+    reviewDate: { fontSize: 10, color: '#bbb' },
     reviewText: { fontSize: 13, color: '#555', lineHeight: 19 },
-    moreReviews: { alignItems: 'center', paddingVertical: 10 },
-    moreReviewsText: { fontSize: 13, color: PRIMARY, fontWeight: '700' },
-
-    // Related
-    relCard: {
-        width: 130, backgroundColor: '#fff',
-        borderRadius: 14, overflow: 'hidden',
-        elevation: 2, shadowColor: '#000', shadowOpacity: 0.06,
-        shadowOffset: { width: 0, height: 2 }, shadowRadius: 6,
-    },
-    relBadge: {
-        position: 'absolute', top: 6, left: 6, zIndex: 10,
-        backgroundColor: PRIMARY_LIGHT, borderRadius: 5,
-        paddingHorizontal: 5, paddingVertical: 1,
-    },
-    relBadgeText: { color: '#fff', fontSize: 8, fontWeight: '800' },
-    relImageBox: { height: 90, backgroundColor: '#f0f7f0', alignItems: 'center', justifyContent: 'center' },
-    relEmoji: { fontSize: 44 },
-    relName: { fontSize: 11, fontWeight: '600', color: '#333', paddingHorizontal: 8, paddingTop: 8, lineHeight: 15 },
-    relPrice: { fontSize: 12, fontWeight: '800', color: PRIMARY, paddingHorizontal: 8, paddingTop: 4, paddingBottom: 10 },
-
-    // Bottom bar
     bottomBar: {
         position: 'absolute', bottom: 0, left: 0, right: 0,
         flexDirection: 'row', gap: 10,
-        backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 12,
-        paddingBottom: 28,
-        borderTopWidth: 1, borderTopColor: '#f0f0f0',
-        elevation: 15, shadowColor: '#000', shadowOpacity: 0.1,
-        shadowOffset: { width: 0, height: -3 }, shadowRadius: 8,
+        backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 12, paddingBottom: 28,
+        borderTopWidth: 1, borderTopColor: '#f0f0f0', elevation: 15,
     },
     cartOutlineBtn: {
         flex: 1, height: 50, borderRadius: 14,
@@ -452,7 +367,7 @@ const styles = StyleSheet.create({
     buyNowBtn: {
         flex: 1.4, height: 50, borderRadius: 14,
         backgroundColor: PRIMARY, alignItems: 'center', justifyContent: 'center',
-        elevation: 4, shadowColor: PRIMARY, shadowOpacity: 0.4, shadowOffset: { width: 0, height: 4 }, shadowRadius: 8,
+        elevation: 4,
     },
-    buyNowText: { fontSize: 15, fontWeight: '800', color: '#fff', letterSpacing: 0.3 },
+    buyNowText: { fontSize: 15, fontWeight: '800', color: '#fff' },
 });
