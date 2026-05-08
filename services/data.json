@@ -1,0 +1,228 @@
+{
+    "fields": [
+        {
+            "id": "1",
+            "name": "Sân bóng đá Ánh Dương",
+            "sport": "Bóng đá",
+            "price": 300000,
+            "location": "Quận 1, TP.HCM",
+            "address": "123 Đường ABC, Quận 1",
+            "available": true,
+            "rating": 4.8,
+            "image": "bernabeu",
+            "amenities": ["wifi", "parking", "locker", "shower"]
+        },
+        {
+            "id": "2",
+            "name": "Sân bóng đá Thống Nhất",
+            "sport": "Bóng đá",
+            "price": 350000,
+            "location": "Quận 10, TP.HCM",
+            "address": "456 Đường Thống Nhất, Quận 10",
+            "available": true,
+            "rating": 4.6,
+            "image": "bernabeu",
+            "amenities": ["parking", "locker", "shower"]
+        },
+        {
+            "id": "3",
+            "name": "Sân bóng đá Phú Thọ",
+            "sport": "Bóng đá",
+            "price": 280000,
+            "location": "Quận 11, TP.HCM",
+            "address": "789 Đường Phú Thọ, Quận 11",
+            "available": true,
+            "rating": 4.5,
+            "image": "bernabeu",
+            "amenities": ["parking", "shower"]
+        },
+        {
+            "id": "4",
+            "name": "Sân bóng đá Tao Đàn",
+            "sport": "Bóng đá",
+            "price": 320000,
+            "location": "Quận 3, TP.HCM",
+            "address": "321 Đường Tao Đàn, Quận 3",
+            "available": true,
+            "rating": 4.7,
+            "image": "bernabeu",
+            "amenities": ["wifi", "parking", "cafe"]
+        },
+        {
+            "id": "5",
+            "name": "CLB Cầu lông Nguyễn Du",
+            "sport": "Cầu lông",
+            "price": 150000,
+            "location": "Quận 3, TP.HCM",
+            "address": "456 Đường XYZ, Quận 3",
+            "available": true,
+            "rating": 4.6,
+            "image": "old",
+            "amenities": ["parking", "locker"]
+        },
+        {
+            "id": "6",
+            "name": "Hệ Thống Sân Diamond",
+            "sport": "Cầu lông",
+            "price": 180000,
+            "location": "Quận 7, TP.HCM",
+            "address": "123 Đường Diamond, Quận 7",
+            "available": true,
+            "rating": 4.9,
+            "image": "old",
+            "amenities": ["wifi", "parking", "locker", "air_conditioner"]
+        },
+        {
+            "id": "7",
+            "name": "Sân Cầu Lông Tinh Nhuệ",
+            "sport": "Cầu lông",
+            "price": 120000,
+            "location": "Quận 5, TP.HCM",
+            "address": "789 Đường Tinh Nhuệ, Quận 5",
+            "available": true,
+            "rating": 4.4,
+            "image": "old",
+            "amenities": ["parking"]
+        },
+        {
+            "id": "8",
+            "name": "Sky Badminton Hub",
+            "sport": "Cầu lông",
+            "price": 200000,
+            "location": "Quận 2, TP.HCM",
+            "address": "456 Đường Sky, Quận 2",
+            "available": true,
+            "rating": 4.7,
+            "image": "old",
+            "amenities": ["wifi", "parking", "locker", "shower", "cafe"]
+        },
+        {
+            "id": "9",
+            "name": "Sân Tennis Phú Thọ",
+            "sport": "Tennis",
+            "price": 400000,
+            "location": "Quận 11, TP.HCM",
+            "address": "321 Đường GHI, Quận 11",
+            "available": true,
+            "rating": 4.7,
+            "image": "anfield",
+            "amenities": ["parking", "shower", "cafe"]
+        },
+        {
+            "id": "10",
+            "name": "Pro Tennis Center",
+            "sport": "Tennis",
+            "price": 450000,
+            "location": "Bình Thạnh, TP.HCM",
+            "address": "123 Đường Pro, Bình Thạnh",
+            "available": true,
+            "rating": 4.8,
+            "image": "anfield",
+            "amenities": ["wifi", "parking", "locker", "shower"]
+        },
+        {
+            "id": "11",
+            "name": "Sân Tennis Ký Hiệu",
+            "sport": "Tennis",
+            "price": 380000,
+            "location": "Quận 9, TP.HCM",
+            "address": "789 Đường Ký Hiệu, Quận 9",
+            "available": true,
+            "rating": 4.5,
+            "image": "anfield",
+            "amenities": ["parking", "shower"]
+        },
+        {
+            "id": "12",
+            "name": "Green Tennis Club",
+            "sport": "Tennis",
+            "price": 420000,
+            "location": "Quận 12, TP.HCM",
+            "address": "456 Đường Green, Quận 12",
+            "available": true,
+            "rating": 4.6,
+            "image": "anfield",
+            "amenities": ["wifi", "parking", "cafe"]
+        },
+        {
+            "id": "13",
+            "name": "Sân bóng rổ Trần Hưng Đạo",
+            "sport": "Bóng rổ",
+            "price": 200000,
+            "location": "Quận 5, TP.HCM",
+            "address": "789 Đường DEF, Quận 5",
+            "available": true,
+            "rating": 4.9,
+            "image": "etihad",
+            "amenities": ["wifi", "parking", "air_conditioner"]
+        },
+        {
+            "id": "14",
+            "name": "NBA Arena Club",
+            "sport": "Bóng rổ",
+            "price": 250000,
+            "location": "Quận 1, TP.HCM",
+            "address": "123 Đường NBA, Quận 1",
+            "available": true,
+            "rating": 4.8,
+            "image": "etihad",
+            "amenities": ["wifi", "parking", "locker", "air_conditioner"]
+        },
+        {
+            "id": "15",
+            "name": "Sân Bóng Rổ Lê Lợi",
+            "sport": "Bóng rổ",
+            "price": 180000,
+            "location": "Quận 1, TP.HCM",
+            "address": "456 Đường Lê Lợi, Quận 1",
+            "available": true,
+            "rating": 4.6,
+            "image": "etihad",
+            "amenities": ["parking", "locker"]
+        },
+        {
+            "id": "16",
+            "name": "Slam Dunk Arena",
+            "sport": "Bóng rổ",
+            "price": 220000,
+            "location": "Quận 7, TP.HCM",
+            "address": "789 Đường Slam, Quận 7",
+            "available": true,
+            "rating": 4.7,
+            "image": "etihad",
+            "amenities": ["wifi", "parking", "shower", "cafe"]
+        }
+    ],
+    "bookings": [
+        {
+            "id": "booking1",
+            "userId": "user1",
+            "fieldId": "1",
+            "fieldName": "Sân bóng đá Ánh Dương",
+            "date": "2026-05-05",
+            "time": "08:00",
+            "hours": 2,
+            "totalPrice": 600000,
+            "status": "confirmed",
+            "createdAt": "2026-05-01T10:00:00Z"
+        }
+    ],
+    "users": [
+        {
+            "id": "user1",
+            "email": "user@example.com",
+            "password": "123456",
+            "fullName": "Nguyễn Văn A",
+            "phone": "0901234567",
+            "role": "user"
+        },
+        {
+            "id": "admin1",
+            "email": "admin@example.com",
+            "password": "admin123",
+            "fullName": "Quản Trị Viên",
+            "phone": "0987654321",
+            "role": "admin"
+        }
+    ]
+}

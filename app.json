@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "H2D Sport",
+    "slug": "ThueSanTheThaoApp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": false,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo.jpg",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/logo.jpg"
+    }
+  }
+}
