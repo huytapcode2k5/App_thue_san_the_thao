@@ -83,21 +83,31 @@ export default function CartScreen({ navigation }) {
                 {item.size ? <Text style={styles.meta}>Size: {item.size}</Text> : null}
                 {item.time ? <Text style={styles.meta}>⏰ {item.time}</Text> : null}
                 <Text style={styles.price}>{item.price.toLocaleString()}đ</Text>
-                <View style={styles.quantityRow}>
-                  <TouchableOpacity
-                    style={styles.qtyBtn}
-                    onPress={() => updateQuantity(item.id, item.quantity - 1)}
-                  >
-                    <Ionicons name="remove" size={18} color="#000" />
-                  </TouchableOpacity>
-                  <Text style={styles.qtyText}>{item.quantity}</Text>
-                  <TouchableOpacity
-                    style={styles.qtyBtn}
-                    onPress={() => updateQuantity(item.id, item.quantity + 1)}
-                  >
-                    <Ionicons name="add" size={18} color="#000" />
-                  </TouchableOpacity>
-                </View>
+                {type === "product" ? (
+                  <View style={styles.quantityRow}>
+                    <TouchableOpacity
+                      style={styles.qtyBtn}
+                      onPress={() => updateQuantity(item.id, item.quantity - 1)}
+                    >
+                      <Ionicons name="remove" size={18} color="#000" />
+                    </TouchableOpacity>
+
+                    <Text style={styles.qtyText}>{item.quantity}</Text>
+
+                    <TouchableOpacity
+                      style={styles.qtyBtn}
+                      onPress={() => updateQuantity(item.id, item.quantity + 1)}
+                    >
+                      <Ionicons name="add" size={18} color="#000" />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <View style={styles.fieldInfo}>
+                    <Text style={styles.fieldBookingText}>
+                      📌 Đã đặt 1 sân
+                    </Text>
+                  </View>
+                )}
               </View>
               <TouchableOpacity style={styles.deleteBtn} onPress={() => removeFromCart(item.id)}>
                 <Ionicons name="trash-outline" size={22} color="red" />

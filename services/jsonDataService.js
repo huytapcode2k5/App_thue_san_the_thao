@@ -1,11 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import initialData from './data.json';
 
+const DATA_VERSION = '2'; // Tăng số này khi muốn reset data
 const STORAGE_KEYS = {
     FIELDS: '@sport_fields',
     BOOKINGS: '@sport_bookings',
     USERS: '@sport_users',
-    CURRENT_USER: '@sport_current_user'
+    CURRENT_USER: '@sport_current_user',
+    VERSION: '@sport_data_version'
 };
 
 const toStr = (v) => String(v);
@@ -36,8 +38,12 @@ const normalizeBooking = (b) => ({
 
 export const initializeData = async () => {
     try {
+        // Kiểm tra version — nếu khác thì xóa hết và load lại
+        const savedVersion = await AsyncStorage.getItem(STORAGE_KEYS.VERSION);
         const fields = await AsyncStorage.getItem(STORAGE_KEYS.FIELDS);
-        if (!fields) {
+        if (!fields || savedVersion !== DATA_VERSION) {
+            await AsyncStorage.removeItem(STORAGE_KEYS.FIELDS);
+            await AsyncStorage.removeItem(STORAGE_KEYS.BOOKINGS);
             await AsyncStorage.setItem(
                 STORAGE_KEYS.FIELDS,
                 JSON.stringify(initialData.fields.map(normalizeField))
@@ -50,6 +56,7 @@ export const initializeData = async () => {
                 STORAGE_KEYS.USERS,
                 JSON.stringify(initialData.users.map(normalizeUser))
             );
+            await AsyncStorage.setItem(STORAGE_KEYS.VERSION, DATA_VERSION);
         }
         return true;
     } catch (error) {
@@ -92,7 +99,6 @@ export const addField = async (newField) => {
     }
 };
 
-
 const updateFieldAvailability = async (fieldId, available) => {
     const fields = await getFields();
     const index = fields.findIndex(f => f.id === toStr(fieldId));
@@ -101,8 +107,6 @@ const updateFieldAvailability = async (fieldId, available) => {
         await AsyncStorage.setItem(STORAGE_KEYS.FIELDS, JSON.stringify(fields));
     }
 };
-
-
 
 // ── BOOKING SERVICES ─────────────────────────────────────────────
 export const getBookings = async () => {
@@ -119,53 +123,20 @@ export const getBookings = async () => {
 export const getUserBookings = async (userId) => {
     const bookings = await getBookings();
     return bookings.filter(b => b.userId === toStr(userId));
-
-};
-
-// Lấy các slot đã bị đặt của 1 sân trong 1 ngày cụ thể
-export const getBookedSlots = async (fieldId, date) => {
-    try {
-        const bookings = await getBookings();
-        return bookings
-            .filter(b =>
-                b.fieldId === toStr(fieldId) &&
-                b.date === date &&
-                b.status !== 'cancelled'
-            )
-            .map(b => b.time);
-    } catch (error) {
-        return [];
-    }
-
 };
 
 export const createBooking = async (bookingData) => {
     try {
         const bookings = await getBookings();
-
-        // Kiểm tra slot (ngày + giờ) đã có người đặt chưa
-        const conflict = bookings.find(b =>
-            b.fieldId === toStr(bookingData.fieldId) &&
-            b.date === bookingData.date &&
-            b.time === bookingData.time &&
-            b.status !== 'cancelled'
-        );
-
-        if (conflict) {
-            return { success: false, error: 'Khung giờ này đã có người đặt, vui lòng chọn giờ khác!' };
-        }
-
         const newBooking = normalizeBooking({
             id: Date.now().toString(),
             ...bookingData,
             status: 'pending',
             createdAt: new Date().toISOString(),
         });
-
         bookings.push(newBooking);
         await AsyncStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(bookings));
-
-        // KHÔNG đánh dấu hết sân nữa — chỉ khóa đúng slot đó
+        await updateFieldAvailability(bookingData.fieldId, false);
         return { success: true, booking: newBooking };
     } catch (error) {
         return { success: false, error: error.message };

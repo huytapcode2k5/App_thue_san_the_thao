@@ -113,7 +113,16 @@ export default function HistoryScreen({ navigation }) {
                         filtered.map((item) => {
                             const statusStyle = STATUS_CONFIG[item.status] || STATUS_CONFIG["ĐÃ THANH TOÁN"];
                             return (
-                                <View key={item.id} style={styles.card}>
+                                <TouchableOpacity
+                                    key={item.id}
+                                    style={styles.card}
+                                    activeOpacity={0.9}
+                                    onPress={() =>
+                                        navigation.navigate("HistoryDetail", {
+                                            order: item,
+                                        })
+                                    }
+                                >
                                     <Image
                                         source={getImage(item.image, item.type)} // ✅ ảnh đúng
                                         style={styles.cardImg}
@@ -152,7 +161,7 @@ export default function HistoryScreen({ navigation }) {
                                             <Text style={styles.total}>Tổng: {item.total.toLocaleString()}đ</Text>
                                         </View>
                                     </View>
-                                </View>
+                                </TouchableOpacity>
                             );
                         })
                     )}

@@ -16,6 +16,7 @@ import ShopScreen from '../screens/ShopScreen';
 import ProductDetailScreen from '../screens/ProductDetailScreen';
 import PaymentScreen from '../screens/PaymentScreen';
 import PaymentConfirmScreen from '../screens/PaymentConfirmScreen';
+import HistoryDetailScreen from '../screens/HistoryDetailScreen';
 
 const Tab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
@@ -118,6 +119,25 @@ function ShopStack() {
         </ShopStackNav.Navigator>
     );
 }
+const HistoryStackNav = createNativeStackNavigator();
+
+function HistoryStack() {
+    return (
+        <HistoryStackNav.Navigator>
+            <HistoryStackNav.Screen
+                name="HistoryScreen"
+                component={HistoryScreen}
+                options={{ headerShown: false }}
+            />
+
+            <HistoryStackNav.Screen
+                name="HistoryDetail"
+                component={HistoryDetailScreen}
+                options={{ headerShown: false }}
+            />
+        </HistoryStackNav.Navigator>
+    );
+}
 
 // ── Tab Icons / Labels ───────────────────────────────────────────
 const TAB_ICONS = {
@@ -169,7 +189,7 @@ function TabNavigator() {
             <Tab.Screen name="Booking" component={BookingTabStack} />
             <Tab.Screen name="Shop" component={ShopStack} />
             <Tab.Screen name="Cart" component={CartStack} />
-            <Tab.Screen name="History" component={HistoryScreen} />
+            <Tab.Screen name="History" component={HistoryStack} />
             <Tab.Screen name="Profile" component={ProfileStack} />
         </Tab.Navigator>
     );

@@ -4,7 +4,7 @@ import {
     View, Text, StyleSheet, ScrollView, TouchableOpacity,
     Image, TextInput, StatusBar, Dimensions
 } from 'react-native';
-import { CartContext } from '../screens/CartContext';
+import { CartContext } from './CartContext';
 import { PRODUCTS, PRODUCT_IMAGES } from '../services/productsData';
 
 const { width } = Dimensions.get('window');

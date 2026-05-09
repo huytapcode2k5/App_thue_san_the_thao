@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import {
     View, Text, StyleSheet, ScrollView,
     TouchableOpacity, ActivityIndicator,
@@ -8,6 +8,9 @@ import {
 import { COLORS } from '../utils/constants';
 import { getFields } from '../services/jsonDataService';
 import { useNavigation } from '@react-navigation/native';
+import { getFieldImage } from '../services/fieldImages';
+import { CartContext } from './CartContext'; // Import CartContext
+import { PRODUCTS, PRODUCT_IMAGES } from '../services/productsData'; // Import products data
 
 const { width } = Dimensions.get('window');
 
@@ -25,12 +28,7 @@ const SPORT_COLORS = {
     'Tennis': '#0284c7',
 };
 
-const FIELD_IMAGES = {
-    'bernabeu': require('../assets/bernabeu.jpg'),
-    'old': require('../assets/old.jpg'),
-    'anfield': require('../assets/anfield.jpg'),
-    'etihad': require('../assets/etihad.jpg'),
-};
+
 
 const SPORTS = ['Tất cả', 'Bóng đá', 'Cầu lông', 'Tennis', 'Bóng rổ'];
 
@@ -49,10 +47,10 @@ const TIME_FILTERS = [
     { label: 'Tối (18-22h)', start: 18, end: 22 },
 ];
 
-const FAKE_PRODUCTS = [
-    { id: 'p1', name: 'Vợt Asrex 660 Pro', price: 4250000, icon: '🏸', tag: 'Hot' },
-    { id: 'p2', name: 'Nike Mercurial', price: 3900000, icon: '👟', tag: 'Mới' },
-];
+// Lấy 4 sản phẩm nổi bật (có badge HOT hoặc NEW hoặc SALE)
+const getFeaturedProducts = () => {
+    return PRODUCTS.filter(p => p.badge !== null).slice(0, 4);
+};
 
 export default function HomeScreen({ navigation }) {
     const [fields, setFields] = useState([]);
@@ -64,10 +62,17 @@ export default function HomeScreen({ navigation }) {
     const [selectedTime, setSelectedTime] = useState(0);
     const [showFilter, setShowFilter] = useState(false);
     const [searchFocused, setSearchFocused] = useState(false);
+    const [featuredProducts, setFeaturedProducts] = useState([]);
 
     const scrollY = useRef(new Animated.Value(0)).current;
     const filterAnim = useRef(new Animated.Value(0)).current;
     const stackNav = useNavigation();
+    const { addToCart } = useContext(CartContext);
+
+    useEffect(() => {
+        setFeaturedProducts(getFeaturedProducts());
+    }, []);
+
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', loadData);
         loadData();
@@ -111,6 +116,25 @@ export default function HomeScreen({ navigation }) {
             ?? navigation.navigate('FieldDetail', { field });
     };
 
+    const goToProductDetail = (product) => {
+        navigation.navigate('Shop', {
+            screen: 'ProductDetail',
+            params: { product }
+        });
+    };
+
+    const handleAddToCart = (product) => {
+        const result = addToCart(product);
+        if (result?.error) {
+            Alert.alert('Thông báo', result.error);
+        } else {
+            Alert.alert('Thành công', `Đã thêm ${product.name} vào giỏ hàng`, [
+                { text: 'OK', style: 'cancel' },
+                { text: 'Xem giỏ', onPress: () => navigation.navigate('Cart', { screen: 'CartScreen' }) }
+            ]);
+        }
+    };
+
     const openFilter = () => {
         setShowFilter(true);
         Animated.spring(filterAnim, { toValue: 1, useNativeDriver: true, tension: 80 }).start();
@@ -136,6 +160,11 @@ export default function HomeScreen({ navigation }) {
 
     const featuredFields = fields.slice(0, 3);
     const availableCount = fields.filter(f => f.available).length;
+
+    // Format price function
+    const formatPrice = (price) => {
+        return price?.toLocaleString('vi-VN') + 'đ';
+    };
 
     return (
         <View style={styles.wrapper}>
@@ -269,6 +298,28 @@ export default function HomeScreen({ navigation }) {
                     </>
                 )}
 
+                {/* SẢN PHẨM NỔI BẬT */}
+                {searchText === '' && featuredProducts.length > 0 && (
+                    <>
+                        <SectionHeader
+                            title="🛍️ Sản Phẩm Nổi Bật"
+                            sub={`${featuredProducts.length} sản phẩm`}
+                            onPress={() => navigation.navigate('Shop')}
+                        />
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.productScroll}>
+                            {featuredProducts.map(product => (
+                                <ProductCard
+                                    key={product.id}
+                                    product={product}
+                                    onPress={() => goToProductDetail(product)}
+                                    onAdd={() => handleAddToCart(product)}
+                                    formatPrice={formatPrice}
+                                />
+                            ))}
+                        </ScrollView>
+                    </>
+                )}
+
                 {/* DANH SÁCH SÂN (kết quả filter hoặc theo môn) */}
                 {searchText !== '' || selectedSport !== 'Tất cả' || selectedPrice !== 0 ? (
                     <>
@@ -330,30 +381,6 @@ export default function HomeScreen({ navigation }) {
                             </View>
                         );
                     })
-                )}
-
-                {/* SẢN PHẨM BÁN CHẠY */}
-                {searchText === '' && (
-                    <>
-                        <SectionHeader title="🛍️ Sản Phẩm Nổi Bật" sub="Dụng cụ thể thao" />
-                        <View style={styles.productRow}>
-                            {FAKE_PRODUCTS.map(p => (
-                                <TouchableOpacity key={p.id} style={styles.productCard}>
-                                    <View style={styles.productTag}>
-                                        <Text style={styles.productTagText}>{p.tag}</Text>
-                                    </View>
-                                    <View style={styles.productImgBox}>
-                                        <Text style={{ fontSize: 44 }}>{p.icon}</Text>
-                                    </View>
-                                    <Text style={styles.productName} numberOfLines={2}>{p.name}</Text>
-                                    <Text style={styles.productPrice}>{p.price.toLocaleString('vi-VN')}đ</Text>
-                                    <View style={styles.productAddBtn}>
-                                        <Text style={styles.productAddText}>+ Thêm</Text>
-                                    </View>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    </>
                 )}
 
                 {/* BOTTOM BANNER */}
@@ -469,7 +496,7 @@ function SectionHeader({ title, sub, onPress, color }) {
 }
 
 function FeaturedCard({ field, onPress }) {
-    const imageSource = FIELD_IMAGES[field.image];
+    const imageSource = getFieldImage(field.image);
     const color = SPORT_COLORS[field.sport] || '#2ede5a';
     return (
         <TouchableOpacity style={styles.featuredCard} onPress={onPress} activeOpacity={0.93}>
@@ -509,7 +536,7 @@ function FeaturedCard({ field, onPress }) {
 }
 
 function FieldListCard({ field, onPress }) {
-    const imageSource = FIELD_IMAGES[field.image];
+    const imageSource = getFieldImage(field.image);
     const color = SPORT_COLORS[field.sport] || '#2ede5a';
     return (
         <TouchableOpacity style={styles.listCard} onPress={onPress} activeOpacity={0.93}>
@@ -546,6 +573,66 @@ function FieldListCard({ field, onPress }) {
                     </Text>
                 </View>
             </View>
+        </TouchableOpacity>
+    );
+}
+
+// Component ProductCard mới giống với ShopScreen
+function ProductCard({ product, onPress, onAdd, formatPrice }) {
+    const discount = product.originalPrice
+        ? Math.round((1 - product.price / product.originalPrice) * 100)
+        : null;
+    const imgSrc = PRODUCT_IMAGES[product.image];
+
+    // Xác định màu badge
+    const getBadgeColor = (badge) => {
+        switch (badge) {
+            case 'NEW': return '#1565C0';
+            case 'SALE': return '#FF6F00';
+            case 'HOT': return '#C62828';
+            default: return '#2E7D32';
+        }
+    };
+
+    return (
+        <TouchableOpacity style={styles.productCard} onPress={onPress} activeOpacity={0.93}>
+            {product.badge && (
+                <View style={[styles.productBadge, { backgroundColor: getBadgeColor(product.badge) }]}>
+                    <Text style={styles.productBadgeText}>{product.badge}</Text>
+                </View>
+            )}
+
+            <View style={styles.productImageBox}>
+                {imgSrc ? (
+                    <Image source={imgSrc} style={styles.productImage} resizeMode="cover" />
+                ) : (
+                    <Text style={styles.productEmoji}>🛍️</Text>
+                )}
+            </View>
+
+            <View style={styles.productInfo}>
+                <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
+                <View style={styles.productRating}>
+                    <Text style={styles.productStar}>⭐</Text>
+                    <Text style={styles.productRatingText}>{product.rating}</Text>
+                    <Text style={styles.productReviewText}> ({product.reviews})</Text>
+                </View>
+                <View style={styles.productPriceRow}>
+                    <Text style={styles.productPrice}>{formatPrice(product.price)}</Text>
+                    {discount && (
+                        <View style={styles.productDiscountTag}>
+                            <Text style={styles.productDiscountText}>-{discount}%</Text>
+                        </View>
+                    )}
+                </View>
+                {product.originalPrice && (
+                    <Text style={styles.productOriginalPrice}>{formatPrice(product.originalPrice)}</Text>
+                )}
+            </View>
+
+            <TouchableOpacity style={styles.productAddBtn} onPress={onAdd}>
+                <Text style={styles.productAddBtnText}>+</Text>
+            </TouchableOpacity>
         </TouchableOpacity>
     );
 }
@@ -695,6 +782,123 @@ const styles = StyleSheet.create({
     featuredRatingStar: { fontSize: 11 },
     featuredRatingVal: { fontSize: 12, fontWeight: '800', color: '#f59e0b', marginLeft: 2 },
 
+    // Product scroll styles
+    productScroll: { paddingLeft: 16, marginBottom: 8 },
+    productCard: {
+        width: width * 0.48,
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        marginRight: 12,
+        overflow: 'hidden',
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+    },
+    productBadge: {
+        position: 'absolute',
+        top: 8,
+        left: 8,
+        zIndex: 10,
+        borderRadius: 6,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+    },
+    productBadgeText: {
+        color: '#fff',
+        fontSize: 9,
+        fontWeight: '800',
+        letterSpacing: 0.5,
+    },
+    productImageBox: {
+        height: 130,
+        backgroundColor: '#f0f7f0',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    productImage: {
+        width: '100%',
+        height: '100%',
+    },
+    productEmoji: {
+        fontSize: 56,
+    },
+    productInfo: {
+        padding: 10,
+        paddingBottom: 6,
+    },
+    productName: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#222',
+        lineHeight: 17,
+        marginBottom: 4,
+    },
+    productRating: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    productStar: {
+        fontSize: 10,
+    },
+    productRatingText: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: '#333',
+        marginLeft: 2,
+    },
+    productReviewText: {
+        fontSize: 10,
+        color: '#999',
+    },
+    productPriceRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    productPrice: {
+        fontSize: 13,
+        fontWeight: '800',
+        color: '#2E7D32',
+    },
+    productDiscountTag: {
+        backgroundColor: '#FFF3E0',
+        borderRadius: 4,
+        paddingHorizontal: 4,
+        paddingVertical: 1,
+    },
+    productDiscountText: {
+        fontSize: 9,
+        fontWeight: '700',
+        color: '#FF6F00',
+    },
+    productOriginalPrice: {
+        fontSize: 10,
+        color: '#bbb',
+        textDecorationLine: 'line-through',
+        marginTop: 1,
+    },
+    productAddBtn: {
+        position: 'absolute',
+        bottom: 10,
+        right: 10,
+        backgroundColor: '#2E7D32',
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 2,
+    },
+    productAddBtnText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: '300',
+        marginTop: -1,
+    },
+
     listCard: {
         backgroundColor: '#fff', marginHorizontal: 16, marginBottom: 10,
         borderRadius: 16, flexDirection: 'row', overflow: 'hidden',
@@ -737,25 +941,6 @@ const styles = StyleSheet.create({
     emptySub: { fontSize: 13, color: '#aaa', textAlign: 'center', lineHeight: 20, marginBottom: 20 },
     resetBtn: { backgroundColor: '#111', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 22 },
     resetBtnText: { color: '#fff', fontWeight: '800', fontSize: 14 },
-
-    productRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 12, marginBottom: 8 },
-    productCard: {
-        flex: 1, backgroundColor: '#fff', borderRadius: 16, padding: 14, elevation: 2,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4,
-    },
-    productTag: {
-        position: 'absolute', top: 10, right: 10,
-        backgroundColor: '#ef4444', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6,
-    },
-    productTagText: { color: '#fff', fontSize: 10, fontWeight: '800' },
-    productImgBox: {
-        height: 90, backgroundColor: '#f7f8fa',
-        borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 10,
-    },
-    productName: { fontSize: 12, fontWeight: '600', color: '#222', marginBottom: 5, lineHeight: 17 },
-    productPrice: { fontSize: 13, fontWeight: '900', color: COLORS.primary, marginBottom: 10 },
-    productAddBtn: { backgroundColor: '#111', borderRadius: 8, paddingVertical: 6, alignItems: 'center' },
-    productAddText: { color: '#fff', fontWeight: '700', fontSize: 12 },
 
     bottomBanner: {
         margin: 16, borderRadius: 22, backgroundColor: '#111',
